@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Supply Chain Map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; background: white; }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .mapboxgl-popup-content {
+            padding: 0;
+            border-radius: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            min-width: 280px;
+            max-width: 320px;
+        }
+        
+        .mapboxgl-popup-tip {
+            border-top-color: white;
+        }
+        
+        .stage-popup {
+            padding: 20px;
+        }
+        
+        .stage-header {
+            border-bottom: 1px solid #f0f2f5;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .stage-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stage-icon {
+            font-size: 16px;
+        }
+        
+        .stage-location {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .stage-details {
+            margin-bottom: 16px;
+        }
+        
+        .stage-details:last-child {
+            margin-bottom: 0;
+        }
+        
+        .supplier-section {
+            margin-bottom: 12px;
+        }
+        
+        .supplier-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .supplier-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #374151;
+            margin: 0;
+        }
+        
+        .multi-stage-popup {
+            padding: 20px;
+        }
+        
+        .multi-stage-header {
+            border-bottom: 1px solid #f0f2f5;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .multi-stage-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 6px 0;
+        }
+        
+        .multi-stage-count {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .stage-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #f9fafb;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .stage-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .stage-item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .stage-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .stage-item-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1f2937;
+            margin: 0 0 4px 0;
+        }
+        
+        .stage-item-supplier {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .error-message {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Control panel for toggling popups */
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+        }
+
+        .controls button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .controls button:hover {
+            background: #4338ca;
+        }
+
+        .controls button.active {
+            background: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div id='map'></div>
+    <!-- <div class="controls">
+        <button id="togglePopups" class="active">Hide All Popups</button>
+        <button id="showAllPopups">Show All Popups</button>
+    </div> -->
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div>Loading supply chain data...</div>
+    </div>
+   
+    <script>
+        const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4c3V4bXRmdGJub3hob3J3c3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NDgxOTcsImV4cCI6MjA2ODMyNDE5N30.BTmp0eAi4yZL4oYBtJNKnd84U9ZJaTzrkPyz6WKkyto';
+        const BEARER_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4c3V4bXRmdGJub3hob3J3c3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NDgxOTcsImV4cCI6MjA2ODMyNDE5N30.BTmp0eAi4yZL4oYBtJNKnd84U9ZJaTzrkPyz6WKkyto';
+        
+        // Store all markers and popups for control
+        let allMarkers = [];
+        let popupsVisible = true;
+
+        // Country coordinates mapping (major cities/capitals)
+        const countryCoordinates = {
+            'PT': { lat: 39.3999, lng: -8.2245, name: 'Portugal' }, // Lisbon area
+            'JP': { lat: 35.6762, lng: 139.6503, name: 'Japan' }, // Tokyo
+            'AU': { lat: -25.2744, lng: 133.7751, name: 'Australia' }, // Central Australia
+            'SE': { lat: 59.3293, lng: 18.0686, name: 'Sweden' }, // Stockholm
+            'CN': { lat: 39.9042, lng: 116.4074, name: 'China' }, // Beijing
+            'NO': { lat: 59.9139, lng: 10.7522, name: 'Norway' }, // Oslo
+            'US': { lat: 39.8283, lng: -98.5795, name: 'United States' }, // Geographic center
+            'DE': { lat: 51.1657, lng: 10.4515, name: 'Germany' }, // Geographic center
+            'FR': { lat: 46.2276, lng: 2.2137, name: 'France' }, // Geographic center
+            'IT': { lat: 41.8719, lng: 12.5674, name: 'Italy' }, // Rome
+            'GB': { lat: 55.3781, lng: -3.4360, name: 'United Kingdom' }, // Geographic center
+            'ES': { lat: 40.4637, lng: -3.7492, name: 'Spain' }, // Madrid
+            'NL': { lat: 52.1326, lng: 5.2913, name: 'Netherlands' }, // Geographic center
+            'BE': { lat: 50.5039, lng: 4.4699, name: 'Belgium' }, // Brussels
+            'CH': { lat: 46.8182, lng: 8.2275, name: 'Switzerland' }, // Geographic center
+            'IN': { lat: 20.5937, lng: 78.9629, name: 'India' }, // Geographic center
+            'BR': { lat: -14.2350, lng: -51.9253, name: 'Brazil' }, // Geographic center
+            'CA': { lat: 56.1304, lng: -106.3468, name: 'Canada' }, // Geographic center
+            'MX': { lat: 23.6345, lng: -102.5528, name: 'Mexico' }, // Geographic center
+            'KR': { lat: 35.9078, lng: 127.7669, name: 'South Korea' }, // Geographic center
+            'TH': { lat: 15.8700, lng: 100.9925, name: 'Thailand' }, // Geographic center
+            'VN': { lat: 14.0583, lng: 108.2772, name: 'Vietnam' }, // Geographic center
+            'ID': { lat: -0.7893, lng: 113.9213, name: 'Indonesia' }, // Geographic center
+            'MY': { lat: 4.2105, lng: 101.9758, name: 'Malaysia' }, // Geographic center
+            'SG': { lat: 1.3521, lng: 103.8198, name: 'Singapore' },
+            'PH': { lat: 12.8797, lng: 121.7740, name: 'Philippines' }, // Geographic center
+            'BD': { lat: 23.6850, lng: 90.3563, name: 'Bangladesh' }, // Dhaka
+            'PK': { lat: 30.3753, lng: 69.3451, name: 'Pakistan' }, // Geographic center
+            'TR': { lat: 38.9637, lng: 35.2433, name: 'Turkey' }, // Geographic center
+            'EG': { lat: 26.0975, lng: 31.2357, name: 'Egypt' }, // Geographic center
+            'ZA': { lat: -30.5595, lng: 22.9375, name: 'South Africa' }, // Geographic center
+            'NG': { lat: 9.0820, lng: 8.6753, name: 'Nigeria' }, // Geographic center
+            'KE': { lat: -0.0236, lng: 37.9062, name: 'Kenya' }, // Nairobi
+            'MA': { lat: 31.7917, lng: -7.0926, name: 'Morocco' }, // Rabat
+            'TN': { lat: 33.8869, lng: 9.5375, name: 'Tunisia' }, // Tunis
+        };
+        
+        // Stage type colors and icons
+        const stageConfig = {
+            'Assembly': { color: '#4f46e5', icon: '🏭', bgColor: '#eef2ff' },
+            'Fabric process': { color: '#f59e0b', icon: '🧵', bgColor: '#fffbeb' },
+            'Yarn': { color: '#8b5cf6', icon: '🧶', bgColor: '#f3f4f6' },
+            'Raw materials': { color: '#10b981', icon: '🌾', bgColor: '#ecfdf5' },
+            'Warehouse': { color: '#6b7280', icon: '📦', bgColor: '#f9fafb' },
+            'Transport': { color: '#06b6d4', icon: '🚚', bgColor: '#f0fdff' },
+            'default': { color: '#9ca3af', icon: '📍', bgColor: '#f9fafb' }
+        };
+
+        // Replace with your actual Mapbox access token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZmFyaWRpbyIsImEiOiJjbWVrNGFrdTIwMmNpMnFwa3NnaGIxMzZkIn0.Zfis6EEHZpQxhx5c3M-qWg';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [20, 40], // Center on Europe initially
+            zoom: 2
+        });
+
+        // Function to fetch supply chain data
+        async function fetchSupplyChainData(productId = 254) {
+            try {
+                const response = await fetch(
+                    `https://axsuxmtftbnoxhorwsvb.supabase.co/rest/v1/product_stages?product_id=eq.${productId}&select=*,suppliers(name,country,city),stage_types(stage_name)`,
+                    {
+                        headers: {
+                            'apikey': API_KEY,
+                            'Authorization': `Bearer ${BEARER_TOKEN}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching supply chain data:', error);
+                throw error;
+            }
+        }
+
+        // Function to get coordinates for a country
+        function getCountryCoordinates(countryCode, city = null) {
+            // If we have specific city coordinates for known cities, we could add them here
+            // For now, we'll use country-level coordinates
+            return countryCoordinates[countryCode] || { lat: 0, lng: 0, name: 'Unknown' };
+        }
+
+        // Function to create marker and popup for a stage
+        function createStageMarker(stage, coordinates) {
+            const stageType = stage.stage_types?.stage_name || 'default';
+            const config = stageConfig[stageType] || stageConfig.default;
+            
+            // Create marker element
+            const markerEl = document.createElement('div');
+            markerEl.style.width = '24px';
+            markerEl.style.height = '24px';
+            markerEl.style.borderRadius = '50%';
+            // markerEl.style.backgroundColor = config.color;
+            // markerEl.style.border = '3px solid white';
+            // markerEl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+            markerEl.style.cursor = 'pointer';
+            markerEl.style.display = 'flex';
+            markerEl.style.alignItems = 'center';
+            markerEl.style.justifyContent = 'center';
+            markerEl.style.fontSize = '28px';
+            markerEl.innerHTML = config.icon;
+
+            // Create popup content
+            const location = stage.suppliers?.city ? 
+                `${stage.suppliers.city}, ${coordinates.name}` : 
+                coordinates.name;
+
+            const popupContent = `
+                <div class="stage-popup">
+                    <div class="stage-header">
+                        <div class="stage-title">
+                            <span class="stage-icon">${config.icon}</span>
+                            ${stageType}
+                        </div>
+                        <p class="stage-location">${location}</p>
+                    </div>
+                    
+                    <div class="stage-details">
+                        <div class="supplier-section">
+                            <div class="supplier-label">Supplier</div>
+                            <p class="supplier-name">${stage.suppliers?.name || 'Unknown Supplier'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Create popup
+            const popup = new mapboxgl.Popup({
+                offset: 25,
+                closeButton: true,
+                closeOnClick: false
+            }).setHTML(popupContent);
+
+            // Create marker and add it immediately with popup open
+            const marker = new mapboxgl.Marker(markerEl)
+                .setLngLat([coordinates.lng, coordinates.lat])
+                .setPopup(popup)
+                .addTo(map);
+
+            // Show popup immediately
+            popup.addTo(map);
+
+            // Store marker for later control
+            allMarkers.push({ marker, popup });
+
+            return marker;
+        }
+
+        // Function to show error message
+        function showError(message) {
+            const errorEl = document.createElement('div');
+            errorEl.className = 'error-message';
+            errorEl.innerHTML = `<strong>Error:</strong> ${message}`;
+            document.body.appendChild(errorEl);
+            
+            setTimeout(() => {
+                if (errorEl.parentNode) {
+                    errorEl.parentNode.removeChild(errorEl);
+                }
+            }, 5000);
+        }
+
+        // Function to hide loading overlay
+        function hideLoading() {
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) {
+                loadingEl.remove();
+            }
+        }
+
+        // Function to toggle all popups
+        function toggleAllPopups() {
+            const button = document.getElementById('togglePopups');
+            
+            if (popupsVisible) {
+                // Hide all popups
+                allMarkers.forEach(({ popup }) => {
+                    popup.remove();
+                });
+                button.textContent = 'Show All Popups';
+                button.classList.remove('active');
+                popupsVisible = false;
+            } else {
+                // Show all popups
+                allMarkers.forEach(({ popup }) => {
+                    popup.addTo(map);
+                });
+                button.textContent = 'Hide All Popups';
+                button.classList.add('active');
+                popupsVisible = true;
+            }
+        }
+
+        // Function to show all popups
+        function showAllPopups() {
+            allMarkers.forEach(({ popup }) => {
+                popup.addTo(map);
+            });
+            document.getElementById('togglePopups').textContent = 'Hide All Popups';
+            document.getElementById('togglePopups').classList.add('active');
+            popupsVisible = true;
+        }
+
+        // Main function to load and display supply chain data
+        async function loadSupplyChainData() {
+            try {
+                const data = await fetchSupplyChainData();
+                
+                if (!data || data.length === 0) {
+                    throw new Error('No supply chain data found');
+                }
+
+                // Group stages by country to avoid overlapping markers
+                const stagesByCountry = {};
+                
+                data.forEach(stage => {
+                    const countryCode = stage.suppliers?.country;
+                    if (countryCode) {
+                        if (!stagesByCountry[countryCode]) {
+                            stagesByCountry[countryCode] = [];
+                        }
+                        stagesByCountry[countryCode].push(stage);
+                    }
+                });
+
+                // Create markers for each country
+                Object.entries(stagesByCountry).forEach(([countryCode, stages]) => {
+                    const coordinates = getCountryCoordinates(countryCode);
+                    
+                    if (coordinates.lat !== 0 || coordinates.lng !== 0) {
+                        // If multiple stages in same country, create one marker with combined popup
+                        if (stages.length === 1) {
+                            createStageMarker(stages[0], coordinates);
+                        } else {
+                            // Create a combined marker for multiple stages
+                            const markerEl = document.createElement('div');
+                            markerEl.style.width = '32px';
+                            markerEl.style.height = '32px';
+                            markerEl.style.borderRadius = '50%';
+                            markerEl.style.backgroundColor = '#1f2937';
+                            markerEl.style.color = 'white';
+                            markerEl.style.border = '3px solid white';
+                            markerEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                            markerEl.style.cursor = 'pointer';
+                            markerEl.style.display = 'flex';
+                            markerEl.style.alignItems = 'center';
+                            markerEl.style.justifyContent = 'center';
+                            markerEl.style.fontSize = '14px';
+                            markerEl.style.fontWeight = '600';
+                            markerEl.innerHTML = stages.length;
+
+                            // Create combined popup
+                            const popupContent = `
+                                <div class="multi-stage-popup">
+                                    <div class="multi-stage-header">
+                                        <div class="multi-stage-title">${coordinates.name}</div>
+                                        <p class="multi-stage-count">${stages.length} supply chain stages</p>
+                                    </div>
+                                    
+                                    <div class="stage-list">
+                                        ${stages.map(stage => {
+                                            const stageType = stage.stage_types?.stage_name || 'default';
+                                            const config = stageConfig[stageType] || stageConfig.default;
+                                            
+                                            return `
+                                                <div class="stage-item">
+                                                    <div class="stage-item-icon" style="background-color: ${config.bgColor}; color: ${config.color};">
+                                                        ${config.icon}
+                                                    </div>
+                                                    <div class="stage-item-content">
+                                                        <p class="stage-item-name">${stageType}</p>
+                                                        <p class="stage-item-supplier">${stage.suppliers?.name || 'Unknown Supplier'}</p>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `;
+
+                            const popup = new mapboxgl.Popup({
+                                offset: 25,
+                                closeButton: true,
+                                closeOnClick: false
+                            }).setHTML(popupContent);
+
+                            const marker = new mapboxgl.Marker(markerEl)
+                                .setLngLat([coordinates.lng, coordinates.lat])
+                                .setPopup(popup)
+                                .addTo(map);
+
+                            // Show popup immediately
+                            popup.addTo(map);
+
+                            // Store marker for later control
+                            allMarkers.push({ marker, popup });
+                        }
+                    }
+                });
+
+                console.log(`Loaded ${data.length} supply chain stages`);
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Error loading supply chain data:', error);
+                hideLoading();
+                showError('Failed to load supply chain data. Please check your internet connection and try again.');
+            }
+        }
+
+        map.on('load', () => {
+            // Remove all text labels from the map
+            const layers = map.getStyle().layers;
+            layers.forEach((layer) => {
+                if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+                    map.removeLayer(layer.id);
+                }
+            });
+
+            // Load supply chain data
+            loadSupplyChainData();
+        });
+
+        // Add event listeners for control buttons
+        document.getElementById('togglePopups').addEventListener('click', toggleAllPopups);
+        document.getElementById('showAllPopups').addEventListener('click', showAllPopups);
+
+        // Add navigation controls
+        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(new mapboxgl.FullscreenControl());
+
+        // Add error handling for map
+        map.on('error', (e) => {
+            console.error('Mapbox error:', e);
+            hideLoading();
+            document.getElementById('map').innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: white; font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+                    <div>
+                        <h2>Map Failed to Load</h2>
+                        <p>Please ensure you have a valid Mapbox access token.</p>
+                    </div>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>
