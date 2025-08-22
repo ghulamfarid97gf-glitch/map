@@ -7,8 +7,24 @@
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.css' rel='stylesheet' />
     <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; background: white; }
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; }
+        
+        .map-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 600px;
+            margin: 0 auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            background: white;
+        }
+        
+        #map { 
+            width: 100%; 
+            height: 100%; 
+            background: white; 
+        }
         
         .mapboxgl-popup-content {
             padding: 0;
@@ -124,10 +140,18 @@
             color: #1a1a1a;
             margin: 0;
         }
+
+        .mapboxgl-ctrl-attrib,
+        .mapboxgl-ctrl-bottom-right,
+        .mapboxgl-ctrl-bottom-left {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
-    <div id='map'></div>
+    <div class="map-container">
+        <div id='map'></div>
+    </div>
    
     <script>
         // Replace with your actual Mapbox access token
@@ -535,31 +559,81 @@
                 }
             });
 
-            // Add source points layer
-            map.addLayer({
-                'id': 'source-points',
-                'type': 'circle',
-                'source': 'source-points',
-                'paint': {
-                    'circle-radius': 6,
-                    'circle-color': '#000000',
-                    'circle-opacity': 1,
-                    'circle-stroke-width': 0
-                }
-            });
+            // Create custom pin SVG
+            const pinSVG = `
+               <svg fill="#000000" height="8px" width="8px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 21.041 21.041" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g id="c88_square"> <path d="M20.51,0H0.524C0.267,0,0.056,0.209,0.056,0.469v20.104c0,0.255,0.211,0.468,0.468,0.468H20.51 c0.263,0,0.476-0.213,0.476-0.468V0.469C20.986,0.209,20.772,0,20.51,0z"></path> </g> <g id="Capa_1_233_"> </g> </g> </g></svg>
+            `;
 
-            // Add destination points layer
-            map.addLayer({
-                'id': 'destination-points',
-                'type': 'circle',
-                'source': 'destination-points',
-                'paint': {
-                    'circle-radius': 4,
-                    'circle-color': '#000000',
-                    'circle-opacity': 1,
-                    'circle-stroke-width': 0
-                }
-            });
+            // Convert SVG to data URL
+            const pinDataURL = 'data:image/svg+xml;base64,' + btoa(pinSVG);
+
+            // Load the custom pin image
+            const img = new Image();
+            img.onload = () => {
+                map.addImage('custom-pin', img);
+                
+                // Add source points layer with pins
+                map.addLayer({
+                    'id': 'source-points',
+                    'type': 'symbol',
+                    'source': 'source-points',
+                    'layout': {
+                        'icon-image': 'custom-pin',
+                        'icon-size': 1.2,
+                        'icon-anchor': 'bottom',
+                        'icon-allow-overlap': true,
+                        'icon-ignore-placement': true
+                    }
+                });
+
+                // Add destination points layer with pins
+                map.addLayer({
+                    'id': 'destination-points',
+                    'type': 'symbol',
+                    'source': 'destination-points',
+                    'layout': {
+                        'icon-image': 'custom-pin',
+                        'icon-size': 0.8,
+                        'icon-anchor': 'bottom',
+                        'icon-allow-overlap': true,
+                        'icon-ignore-placement': true
+                    }
+                });
+            };
+            
+            img.onerror = () => {
+                console.error('Error loading custom pin, falling back to circles');
+                addCircleLayers();
+            };
+            
+            img.src = pinDataURL;
+
+            // Fallback function for circle layers
+            function addCircleLayers() {
+                map.addLayer({
+                    'id': 'source-points',
+                    'type': 'circle',
+                    'source': 'source-points',
+                    'paint': {
+                        'circle-radius': 6,
+                        'circle-color': '#000000',
+                        'circle-opacity': 1,
+                        'circle-stroke-width': 0
+                    }
+                });
+
+                map.addLayer({
+                    'id': 'destination-points',
+                    'type': 'circle',
+                    'source': 'destination-points',
+                    'paint': {
+                        'circle-radius': 4,
+                        'circle-color': '#000000',
+                        'circle-opacity': 1,
+                        'circle-stroke-width': 0
+                    }
+                });
+            }
 
             // Function to close current popup and create new one
             function showPopup(lngLat, content) {
@@ -661,11 +735,7 @@
             allCoordinates.forEach(coord => bounds.extend(coord));
             map.fitBounds(bounds, { padding: 50 });
         });
-
-        // Add navigation controls
-        map.addControl(new mapboxgl.NavigationControl());
-        map.addControl(new mapboxgl.FullscreenControl());
-
+        
         // Add error handling
         map.on('error', (e) => {
             console.error('Mapbox error:', e);
