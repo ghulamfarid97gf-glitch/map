@@ -11,34 +11,118 @@
         #map { position: absolute; top: 0; bottom: 0; width: 100%; background: white; }
         
         .mapboxgl-popup-content {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            padding: 12px;
-            max-width: 300px;
+            padding: 0;
+            border-radius: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            min-width: 280px;
+            max-width: 320px;
         }
         
-        .popup-title {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
+        .stage-header {
+            border-bottom: 1px solid #f0f2f5;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .stage-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stage-location {
             font-size: 14px;
+            color: #6b7280;
+            margin: 0;
         }
         
-        .popup-detail {
-            margin: 4px 0;
+        .supplier-section {
+            margin-bottom: 12px;
+        }
+        
+        .supplier-label {
             font-size: 12px;
-            color: #555;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
         
+        .supplier-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #374151;
+            margin: 0;
+        }
+
+        .detail-section {
+            margin-bottom: 8px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #374151;
+            margin: 0;
+        }
+
+        .stage-popup {
+            padding: 20px;
+        }
+
+        .phase-section {
+            border-bottom: 1px solid #f0f2f5;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+
+        .phase-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 4px 0;
+        }
+
+        .sub-phase-title {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0 0 16px 0;
+        }
+
         .stage-badge {
             display: inline-block;
-            background: #3498db;
+            background: #000000;
             color: white;
-            padding: 2px 6px;
+            padding: 6px 12px;
             border-radius: 12px;
-            font-size: 10px;
-            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .location-section {
+            margin-top: 16px;
+        }
+
+        .location-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
         }
     </style>
 </head>
@@ -189,6 +273,9 @@
             center: [20, 45],
             zoom: 3
         });
+
+        // Track current popup to prevent multiple popups
+        let currentPopup = null;
 
         // Use black color for all elements
         const stageColors = {
@@ -474,33 +561,77 @@
                 }
             });
 
-            // Add click events for popups
+            // Function to close current popup and create new one
+            function showPopup(lngLat, content) {
+                // Close existing popup if it exists
+                if (currentPopup) {
+                    currentPopup.remove();
+                }
+                
+                // Create new popup
+                currentPopup = new mapboxgl.Popup({
+                    offset: 25,
+                    closeButton: true,
+                    closeOnClick: false
+                })
+                    .setLngLat(lngLat)
+                    .setHTML(content)
+                    .addTo(map);
+
+                // Clear the reference when popup is closed
+                currentPopup.on('close', () => {
+                    currentPopup = null;
+                });
+            }
+
+            // Add click events for popups with enhanced styling
             map.on('click', 'source-points', (e) => {
                 const properties = e.features[0].properties;
-                new mapboxgl.Popup()
-                    .setLngLat(e.lngLat)
-                    .setHTML(`
-                        <div class="popup-title">${properties.supplier}</div>
-                        <div class="stage-badge">Stage ${properties.level}: ${properties.stage}</div>
-                        <div class="popup-detail"><strong>Country:</strong> ${properties.country}</div>
-                        <div class="popup-detail"><strong>Phase:</strong> ${properties.phase}</div>
-                        <div class="popup-detail"><strong>Sub-phase:</strong> ${properties.sub_phase}</div>
-                        <div class="popup-detail"><strong>Coordinates:</strong> ${properties.coordinates}</div>
-                    `)
-                    .addTo(map);
+                const popupContent = `
+                    <div class="stage-popup">
+                        <div class="phase-section">
+                            <div class="phase-title">${properties.phase}</div>
+                            <p class="sub-phase-title">${properties.sub_phase}</p>
+                            <div class="stage-badge">${properties.level}: ${properties.stage}</div>
+                        </div>
+                        
+                        <div class="supplier-section">
+                            <div class="supplier-label">Supplier</div>
+                            <p class="supplier-name">${properties.supplier}</p>
+                        </div>
+                        
+                        <div class="location-section">
+                            <div class="detail-label">Location</div>
+                            <p class="location-value">${properties.country}</p>
+                        </div>
+                    </div>
+                `;
+                
+                showPopup(e.lngLat, popupContent);
             });
 
             map.on('click', 'destination-points', (e) => {
                 const properties = e.features[0].properties;
-                new mapboxgl.Popup()
-                    .setLngLat(e.lngLat)
-                    .setHTML(`
-                        <div class="popup-title">${properties.supplier}</div>
-                        <div class="stage-badge">Destination</div>
-                        <div class="popup-detail"><strong>Country:</strong> ${properties.country}</div>
-                        <div class="popup-detail"><strong>Coordinates:</strong> ${properties.coordinates}</div>
-                    `)
-                    .addTo(map);
+                const popupContent = `
+                    <div class="stage-popup">
+                        <div class="phase-section">
+                            <div class="phase-title">Destination Point</div>
+                            <div class="stage-badge">Destination</div>
+                        </div>
+                        
+                        <div class="supplier-section">
+                            <div class="supplier-label">Supplier</div>
+                            <p class="supplier-name">${properties.supplier}</p>
+                        </div>
+                        
+                        <div class="location-section">
+                            <div class="detail-label">Location</div>
+                            <p class="location-value">${properties.country}</p>
+                        </div>
+                    </div>
+                `;
+                
+                showPopup(e.lngLat, popupContent);
             });
 
             // Change cursor on hover
