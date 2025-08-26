@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox - Source & Destination</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        // Ensure to replace with your own Mapbox access token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZmFyaWRpbyIsImEiOiJjbWVrNGFrdTIwMmNpMnFwa3NnaGIxMzZkIn0.Zfis6EEHZpQxhx5c3M-qWg';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',  // Style of map
+            center: [135.5023, 35], // Adjusted center to better focus on your coordinates
+            zoom: 3 // Adjusted zoom level to make points more visible
+        });
+
+        // Array of source and destination coordinates with tooltips
+        const supplyChainData = [
+            { source: [-29.4628, 149.841], destination: [35.0211, 135.7539], supplier: "Southern Cross Cotton Co.", country: "Australia", city: "Moree" },
+            { source: [-27.5606, 151.953], destination: [35.0211, 135.7539], supplier: "Outback Fibre Exports", country: "Australia", city: "Toowoomba" },
+            { source: [33.5779, -101.8552], destination: [35.0211, 135.7539], supplier: "Prairie Fields Cotton LLC", country: "USA", city: "Lubbock" },
+            { source: [-34.2889, 146.0583], destination: [29.7604, -95.3698], supplier: "Murray River Cotton Traders", country: "Australia", city: "Griffith" },
+            { source: [-28.036, 148.589], destination: [34.6937, 135.5023], supplier: "Sunland Cotton Growers", country: "Australia", city: "St George" },
+            { source: [-30.331, 149.783], destination: [34.6937, 135.5023], supplier: "Goldfields Fibre Group", country: "Australia", city: "Narrabri" },
+            { source: [-17.8292, 31.0522], destination: [34.6937, 135.5023], supplier: "Zambezi Valley Cotton Co.", country: "Zimbabwe", city: "Harare" },
+            { source: [-29.4628, 149.841], destination: [34.6937, 135.5023], supplier: "Riverbend Cotton Ginning Pty Ltd", country: "Australia", city: "Moree" },
+            { source: [-30.331, 149.783], destination: [34.6937, 135.5023], supplier: "Southern Fibre Ginners", country: "Australia", city: "Narrabri" },
+            { source: [29.7604, -95.3698], destination: [35.0211, 135.7539], supplier: "Heartland Cotton Gin Co.", country: "USA", city: "Houston" },
+            { source: [34.6937, 135.5023], destination: [34.6100879, 133.4148237], supplier: "Setouchi Spinners Co., Ltd.", country: "Japan", city: "Osaka" },
+            { source: [34.6937, 135.5023], destination: [34.6100879, 133.4148237], supplier: "Ishikawa Precision Spinning Works", country: "Japan", city: "Osaka" },
+            { source: [35.0211, 135.7539], destination: [34.6100879, 133.4148237], supplier: "Kansai Recycled Yarn Mill", country: "Japan", city: "Kyoto" },
+            { source: [34.6100879, 133.4148237], destination: [34.603, 133.467], supplier: "Kuroki", country: "Japan", city: "Okayama" },
+            { source: [34.603, 133.467], destination: [35.0211, 135.7539], supplier: "Kojima Indigo Rope Dyeing Co., Ltd.", country: "Japan", city: "Ibara" },
+            { source: [35.0211, 135.7539], destination: [41.4444, -8.2962], supplier: "Ibara Denim Laundry Works", country: "Japan", city: "Kyoto" },
+            { source: [-33.4489, -70.6693], destination: [-33.0472, -71.6127], supplier: "Andes Copper Mining Ltd.", country: "Chile", city: "Santiago" },
+            { source: [-33.0472, -71.6127], destination: [43.877, 11.1022], supplier: "De Smelt co ltd.", country: "Chile", city: "Valparaiso" },
+            { source: [43.877, 11.1022], destination: [45.52, 11.33], supplier: "Veneto Wire Processing SRL", country: "Italy", city: "Prato" },
+            { source: [45.52, 11.33], destination: [41.339, -8.562], supplier: "ItalRod Metallurgy S.p.A.", country: "Italy", city: "Arzignano" },
+            { source: [41.339, -8.562], destination: [39.0375754, -8.9872353], supplier: "Lusometal Finishing SA", country: "Portugal", city: "Trofa" },
+            { source: [39.0375754, -8.9872353], destination: [41.4444, -8.2962], supplier: "YKK", country: "Portugal", city: "Lisboa" },
+            { source: [37.783, 29.0963], destination: [41.0082, 28.9784], supplier: "Anatolia Spinners A.S.", country: "Turkey", city: "Denizli" },
+            { source: [41.0082, 28.9784], destination: [41.5388, -8.6151], supplier: "EgeColor Tekstil Boya Ltd.", country: "Turkey", city: "Istanbul" },
+            { source: [41.5388, -8.6151], destination: [41.388926, -8.4037969], supplier: "Tintas do Atlantico Lda.", country: "Portugal", city: "Barcelos" },
+            { source: [41.388926, -8.4037969], destination: [41.4444, -8.2962], supplier: "Crafil", country: "Portugal", city: "Oliveira Sao Mateus" },
+            { source: [43.71, 10.77], destination: [45.52, 11.33], supplier: "ItalPelle Sourcing S.r.l.", country: "Italy", city: "Santa Croce sull'Arno" },
+            { source: [45.52, 11.33], destination: [44.7797229, 10.847695], supplier: "Conceria Valverde S.p.A", country: "Italy", city: "Arzignano" },
+            { source: [44.7797229, 10.847695], destination: [41.4444, -8.2962], supplier: "Cadica", country: "Italy", city: "Modena" },
+            { source: [41.3833695, -8.5747734], destination: [41.4444, -8.2962], supplier: "Passamar", country: "Portugal", city: "Vilarinho das Cambas" },
+            { source: [41.4444, -8.2962], destination: [59.9290137, 10.8200294], supplier: "Lisama", country: "Portugal", city: "Guimaraes" },
+            { source: [59.9290137, 10.8200294], destination: null, supplier: "Livid", country: "Norway", city: "Oslo" }
+        ];
+
+        // Function to create a popup
+        function createPopup(supplier, country, city) {
+            return new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`<h3>${supplier}</h3><p>Location: ${city}, ${country}</p>`);
+        }
+
+        // Add markers for each source and destination
+        supplyChainData.forEach(entry => {
+            // Add source point marker
+            new mapboxgl.Marker({ color: 'blue' })
+                .setLngLat(entry.source)
+                .setPopup(createPopup(entry.supplier, entry.country, entry.city)) // Tooltip for source
+                .addTo(map);
+
+            // Add destination point marker
+            if (entry.destination) {
+                new mapboxgl.Marker({ color: 'red' })
+                    .setLngLat(entry.destination)
+                    .setPopup(createPopup(entry.supplier, entry.country, entry.city)) // Tooltip for destination
+                    .addTo(map);
+            }
+        });
+    </script>
+</body>
+</html>
