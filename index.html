@@ -356,6 +356,14 @@
         const showWaypointsCheckbox = document.getElementById('showWaypoints');
 
         map.on('load', async () => {
+            // Remove text labels for cleaner look
+            const layers = map.getStyle().layers;
+            layers.forEach((layer) => {
+                if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+                    map.removeLayer(layer.id);
+                }
+            });
+
             await createRoutesAndPoints();
             setupControls();
         });
@@ -460,7 +468,7 @@
                         6, 3,
                         12, 4
                     ],
-                    'line-opacity': 0.2
+                    'line-opacity': 0.8
                 }
             });
 
@@ -589,7 +597,6 @@
                 </svg>
             `;
 
-
             const sourcePinDataURL = 'data:image/svg+xml;base64,' + btoa(sourcePinSVG);
             const destinationPinDataURL = 'data:image/svg+xml;base64,' + btoa(sourcePinSVG);
 
@@ -717,6 +724,10 @@
                         supplier: item.parent_supplier,
                         country: item.parent_location,
                         city: item.parent_city,
+                        phase: item.phase,
+                        sub_phase: item.sub_phase || 'N/A',
+                        stage: item.stage,
+                        level: item.level,
                         type: 'destination'
                     },
                     geometry: {
@@ -801,10 +812,9 @@
                 const props = e.features[0].properties;
                 const popupContent = `
                     <div>
-                        <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
                         <div class="stage-title">${props.phase}</div>
                         <div class="supplier-name">${props.supplier}</div>
-                        
+                         <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
                         <div class="detail-section">
                             <div class="detail-label">Location</div>
                             <div class="detail-value">${props.city}, ${props.country}</div>
@@ -813,16 +823,6 @@
                         <div class="detail-section">
                             <div class="detail-label">Process</div>
                             <div class="detail-value">${props.sub_phase}</div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <div class="detail-label">Material</div>
-                            <div class="detail-value">${props.material}</div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <div class="detail-label">Description</div>
-                            <div class="detail-value">${props.phase_description}</div>
                         </div>
                     </div>
                 `;
@@ -835,11 +835,16 @@
                 const popupContent = `
                     <div>
                         <div class="stage-badge">Destination</div>
-                        <div class="stage-title">${props.supplier}</div>
-                        
+                        <div class="supplier-name">${props.supplier}</div>
+                         <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
                         <div class="detail-section">
                             <div class="detail-label">Location</div>
                             <div class="detail-value">${props.city}, ${props.country}</div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-label">Process</div>
+                            <div class="detail-value">${props.sub_phase}</div>
                         </div>
                     </div>
                 `;
