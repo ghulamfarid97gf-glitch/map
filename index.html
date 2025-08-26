@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset='utf-8' />
-    <title>Supply Chain Map</title>
+    <title>Improved Supply Chain Map</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.css' rel='stylesheet' />
@@ -27,19 +27,13 @@
         }
         
         .mapboxgl-popup-content {
-            padding: 0;
+            padding: 20px;
             border-radius: 12px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
             border: 1px solid rgba(0, 0, 0, 0.08);
             min-width: 280px;
             max-width: 320px;
-        }
-        
-        .stage-header {
-            border-bottom: 1px solid #f0f2f5;
-            padding-bottom: 16px;
-            margin-bottom: 16px;
         }
         
         .stage-title {
@@ -47,35 +41,13 @@
             font-weight: 600;
             color: #1a1a1a;
             margin: 0 0 6px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .stage-location {
-            font-size: 14px;
-            color: #6b7280;
-            margin: 0;
-        }
-        
-        .supplier-section {
-            margin-bottom: 12px;
-        }
-        
-        .supplier-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
         }
         
         .supplier-name {
             font-size: 15px;
             font-weight: 500;
             color: #374151;
-            margin: 0;
+            margin: 0 0 12px 0;
         }
 
         .detail-section {
@@ -97,48 +69,37 @@
             margin: 0;
         }
 
-        .stage-popup {
-            padding: 20px;
-        }
-
-        .phase-section {
-            border-bottom: 1px solid #f0f2f5;
-            padding-bottom: 16px;
-            margin-bottom: 16px;
-        }
-
-        .phase-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin: 0 0 4px 0;
-        }
-
-        .sub-phase-title {
-            font-size: 14px;
-            color: #6b7280;
-            margin: 0 0 16px 0;
-        }
-
         .stage-badge {
             display: inline-block;
-            background: #000000;
+            background: #00AEEF;
             color: white;
             padding: 6px 12px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 500;
+            margin-bottom: 12px;
         }
 
-        .location-section {
-            margin-top: 16px;
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .location-value {
-            font-size: 15px;
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .control-group label {
+            font-size: 12px;
             font-weight: 600;
-            color: #1a1a1a;
-            margin: 0;
+            color: #666;
+            margin-right: 8px;
         }
 
         .mapboxgl-ctrl-attrib,
@@ -150,145 +111,273 @@
 </head>
 <body>
     <div class="map-container">
+        <div class="controls">
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="showArrows" checked> Show Direction Arrows
+                </label>
+            </div>
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="showRoutes" checked> Show Routes
+                </label>
+            </div>
+        </div>
         <div id='map'></div>
     </div>
    
     <script>
-        // Replace with your actual Mapbox access token
         mapboxgl.accessToken = 'pk.eyJ1IjoiZmFyaWRpbyIsImEiOiJjbWVrNGFrdTIwMmNpMnFwa3NnaGIxMzZkIn0.Zfis6EEHZpQxhx5c3M-qWg';
 
-        // Supply chain data with parsed coordinates
-        const supplyChainData = [
-            {
-                id: 2322,
-                supplier: "No name",
-                country: "AU",
-                source: [-31.25321830, 146.92109900],
-                destination: [35.2989, 135.259],
-                parent_supplier: "Ayabe spinning co ltd.",
-                parent_location: "JP",
-                stage: "Raw materials",
-                level: 1,
-                phase: "Primary Harvest / Sourcing",
-                sub_phase: "Cotton farming"
-            },
-            {
-                id: 2321,
-                supplier: "Ayabe spinning co ltd.",
-                country: "JP",
-                source: [35.2989, 135.259],
-                destination: [35.02107, 135.75385],
-                parent_supplier: "Kuroki",
-                parent_location: "JP",
-                stage: "Yarn",
-                level: 2,
-                phase: "Thread Production",
-                sub_phase: "Spinning"
-            },
-            {
-                id: 2319,
-                supplier: "Kuroki",
-                country: "JP",
-                source: [35.02107, 135.75385],
-                destination: [35.01161, 136.96396],
-                parent_supplier: "Toukai Senko co ltd",
-                parent_location: "JP",
-                stage: "Fabric process",
-                level: 3,
-                phase: "Forming Fabric",
-                sub_phase: "Weaving"
-            },
-            {
-                id: 2320,
-                supplier: "TOUKAI SENKO CO.,LTD.",
-                country: "JP",
-                source: [35.01161, 136.96396],
-                destination: [41.4444, -8.2962],
-                parent_supplier: "Lisama",
-                parent_location: "PT",
-                stage: "Fabric process",
-                level: 3,
-                phase: "Dyeing & Finishing",
-                sub_phase: "Dyeing"
-            },
-            {
-                id: 2324,
-                supplier: "Nilorn",
-                country: "SE",
-                source: [57.721035, 12.939819],
-                destination: [41.4444, -8.2962],
-                parent_supplier: "Lisama",
-                parent_location: "PT",
-                stage: "Fabric process",
-                level: 3,
-                phase: "Label production",
-                sub_phase: "Label production"
-            },
-            {
-                id: 2323,
-                supplier: "Crafil",
-                country: "PT",
-                source: [41.39136, -8.40363],
-                destination: [41.4444, -8.2962],
-                parent_supplier: "Lisama",
-                parent_location: "PT",
-                stage: "Assembly",
-                level: 4,
-                phase: "Winding",
-                sub_phase: "Cut & Sew"
-            },
-            {
-                id: 2316,
-                supplier: "Lisama",
-                country: "PT",
-                source: [41.4444, -8.2962],
-                destination: [41.4123881, -8.5206366],
-                parent_supplier: "IVN",
-                parent_location: "PT",
-                stage: "Assembly",
-                level: 4,
-                phase: "Cut & Sew",
-                sub_phase: "Cut & Sew"
-            },
-            {
-                id: 2317,
-                supplier: "IVN",
-                country: "PT",
-                source: [41.4123881, -8.5206366],
-                destination: [40.9692, -8.1513],
-                parent_supplier: "Pontipromenor",
-                parent_location: "PT",
-                stage: "Assembly",
-                level: 4,
-                phase: "Laundry & Dye House",
-                sub_phase: "Laundry"
-            },
-            {
-                id: 2318,
-                supplier: "Pontipormenor",
-                country: "PT",
-                source: [40.9692, -8.1513],
-                destination: [59.9290137, 10.8200294],
-                parent_supplier: "Livid",
-                parent_location: "NO",
-                stage: "Assembly",
-                level: 4,
-                phase: "Package & Finishing",
-                sub_phase: "Package & finishing"
-            },
-            {
-                id: 2325,
-                supplier: "Livid",
-                country: "NO",
-                source: [59.9290137, 10.8200294],
-                destination: null,
-                parent_supplier: null,
-                parent_location: null,
-                stage: "Warehouse",
-                level: 5,
-                phase: "Product storing",
-                sub_phase: null
+        // Major shipping waypoints for realistic maritime routing
+        const SHIPPING_WAYPOINTS = {
+            // Major straits and canals
+            SUEZ_CANAL: [29.97, 32.5],
+            GIBRALTAR: [36.1, -5.35],
+            MALACCA_STRAIT: [1.4, 103.8],
+            PANAMA_CANAL: [9.0, -79.6],
+            HORMUZ_STRAIT: [26.5, 56.3],
+            BOSPHORUS: [41.1, 29.1],
+            DARDANELLES: [40.1, 26.4],
+            
+            // Major ports
+            SINGAPORE: [1.29, 103.85],
+            HONG_KONG: [22.3, 114.2],
+            ROTTERDAM: [51.9, 4.5],
+            SHANGHAI: [31.2, 121.5],
+            DUBAI: [25.3, 55.3],
+            PIRAEUS: [37.9, 23.6],
+            HAMBURG: [53.5, 10.0],
+            LISBON: [38.7, -9.1],
+            VALENCIA: [39.5, -0.4],
+            GENOA: [44.4, 8.9],
+            
+            // Ocean waypoints
+            CAPE_GOOD_HOPE: [-34.4, 18.5],
+            CAPE_HORN: [-55.9, -67.3],
+            MID_ATLANTIC: [15.0, -25.0],
+            MID_PACIFIC_NORTH: [35.0, -150.0],
+            MID_PACIFIC_SOUTH: [-20.0, -140.0],
+            BERING_STRAIT: [65.8, -168.9]
+        };
+
+        class MaritimeRouter {
+            constructor() {
+                this.routes = new Map();
             }
+
+            // Determine if route should avoid land masses
+            needsMaritimeRoute(start, end) {
+                const [startLat, startLng] = start;
+                const [endLat, endLng] = end;
+                
+                // Check if it's a long-distance route
+                const distance = this.calculateDistance(start, end);
+                if (distance < 500) return false; // Short routes can be direct
+                
+                // Check if route crosses major landmasses
+                return this.crossesLand(start, end) || distance > 2000;
+            }
+
+            calculateDistance(start, end) {
+                const [lat1, lng1] = start;
+                const [lat2, lng2] = end;
+                const R = 6371; // Earth's radius in km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                         Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            crossesLand(start, end) {
+                const [startLat, startLng] = start;
+                const [endLat, endLng] = end;
+                
+                // Simple land crossing detection
+                const midLat = (startLat + endLat) / 2;
+                const midLng = (startLng + endLng) / 2;
+                
+                // Check if route crosses major landmasses
+                if (startLng < -50 && endLng > 50) return true; // Atlantic to Indian/Pacific
+                if (startLat > 30 && endLat < 30 && Math.abs(startLng - endLng) > 90) return true; // North to South long distance
+                if (Math.abs(startLng - endLng) > 150 && Math.abs(startLat - endLat) > 30) return true; // Major continental crossing
+                
+                return false;
+            }
+
+            getOptimalRoute(start, end) {
+                const routeKey = `${start.join(',')}-${end.join(',')}`;
+                if (this.routes.has(routeKey)) {
+                    return this.routes.get(routeKey);
+                }
+
+                let waypoints = [];
+                
+                if (!this.needsMaritimeRoute(start, end)) {
+                    waypoints = [start, end];
+                } else {
+                    waypoints = this.calculateMaritimeRoute(start, end);
+                }
+
+                this.routes.set(routeKey, waypoints);
+                return waypoints;
+            }
+
+            calculateMaritimeRoute(start, end) {
+                const [startLat, startLng] = start;
+                const [endLat, endLng] = end;
+                
+                // Define major shipping corridors
+                const route = [start];
+
+                // Asia-Pacific to Europe routes
+                if (startLng > 100 && endLng < 20 && endLat > 30) {
+                    if (startLat > 20) {
+                        // North Asia to Europe via Suez
+                        route.push(SHIPPING_WAYPOINTS.SINGAPORE);
+                        route.push(SHIPPING_WAYPOINTS.MALACCA_STRAIT);
+                        route.push(SHIPPING_WAYPOINTS.DUBAI);
+                        route.push(SHIPPING_WAYPOINTS.SUEZ_CANAL);
+                        route.push(SHIPPING_WAYPOINTS.PIRAEUS);
+                        if (endLng < -5) {
+                            route.push(SHIPPING_WAYPOINTS.GIBRALTAR);
+                        }
+                    } else {
+                        // Southeast Asia to Europe
+                        route.push(SHIPPING_WAYPOINTS.MALACCA_STRAIT);
+                        route.push(SHIPPING_WAYPOINTS.DUBAI);
+                        route.push(SHIPPING_WAYPOINTS.SUEZ_CANAL);
+                        if (endLng < -5) {
+                            route.push(SHIPPING_WAYPOINTS.GIBRALTAR);
+                        }
+                    }
+                }
+                // Americas to Asia-Pacific
+                else if (startLng < -50 && endLng > 100) {
+                    if (startLat > 0) {
+                        // North America to Asia
+                        route.push(SHIPPING_WAYPOINTS.MID_PACIFIC_NORTH);
+                    } else {
+                        // South America to Asia
+                        route.push(SHIPPING_WAYPOINTS.MID_PACIFIC_SOUTH);
+                    }
+                    route.push(SHIPPING_WAYPOINTS.SINGAPORE);
+                }
+                // Americas to Europe
+                else if (startLng < -50 && endLng > -10 && endLng < 50) {
+                    route.push(SHIPPING_WAYPOINTS.MID_ATLANTIC);
+                    if (endLat < 40) {
+                        route.push(SHIPPING_WAYPOINTS.GIBRALTAR);
+                    }
+                }
+                // South America to Europe (around Africa if needed)
+                else if (startLng < -30 && startLat < -10 && endLng > 0 && endLat > 30) {
+                    route.push(SHIPPING_WAYPOINTS.CAPE_GOOD_HOPE);
+                    route.push(SHIPPING_WAYPOINTS.SUEZ_CANAL);
+                    if (endLng < 0) {
+                        route.push(SHIPPING_WAYPOINTS.GIBRALTAR);
+                    }
+                }
+                // Africa to Europe/Turkey
+                else if (startLng > 10 && startLng < 50 && startLat < 10 && endLat > 30) {
+                    if (endLng > 25) {
+                        // To Turkey/Eastern Med
+                        route.push([startLat + 20, startLng]);
+                    } else {
+                        // To Western Europe
+                        route.push(SHIPPING_WAYPOINTS.SUEZ_CANAL);
+                        route.push(SHIPPING_WAYPOINTS.GIBRALTAR);
+                    }
+                }
+                // Intra-European routes
+                else if (startLng > -10 && startLng < 50 && endLng > -10 && endLng < 50 && 
+                         startLat > 30 && endLat > 30) {
+                    // Mediterranean or coastal European
+                    const midLat = (startLat + endLat) / 2;
+                    const midLng = (startLng + endLng) / 2;
+                    
+                    if (startLng > 20 && endLng < 0) {
+                        // Eastern Med to Atlantic
+                        route.push(SHIPPING_WAYPOINTS.GIBRALTAR);
+                    } else if (Math.abs(startLng - endLng) > 20) {
+                        // Long European route
+                        route.push([midLat, midLng]);
+                    }
+                }
+                // Australia to other continents
+                else if (startLng > 110 && startLat < -10) {
+                    if (endLng > 100) {
+                        // Australia to Asia
+                        route.push(SHIPPING_WAYPOINTS.SINGAPORE);
+                    } else if (endLng < 50 && endLat > 30) {
+                        // Australia to Europe
+                        route.push(SHIPPING_WAYPOINTS.SINGAPORE);
+                        route.push(SHIPPING_WAYPOINTS.SUEZ_CANAL);
+                        if (endLng < 0) {
+                            route.push(SHIPPING_WAYPOINTS.GIBRALTAR);
+                        }
+                    }
+                }
+
+                route.push(end);
+                return route;
+            }
+        }
+
+        // Supply chain data (keeping your original data)
+        const supplyChainData = [
+            // Cotton farming sources
+            { id: 1, supplier: "Southern Cross Cotton Co.", country: "AU", city: "Moree", source: [-29.4628, 149.841], destination: [35.0211, 135.7539], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            { id: 2, supplier: "Outback Fibre Exports", country: "AU", city: "Toowoomba", source: [-27.5606, 151.953], destination: [35.0211, 135.7539], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            { id: 3, supplier: "Prairie Fields Cotton LLC", country: "US", city: "Lubbock", source: [33.5779, -101.8552], destination: [35.0211, 135.7539], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            { id: 4, supplier: "Murray River Cotton Traders", country: "AU", city: "Griffith", source: [-34.2889, 146.0583], destination: [29.7604, -95.3698], parent_supplier: "Heartland Cotton Gin Co.", parent_location: "US", parent_city: "Houston", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            { id: 5, supplier: "Sunland Cotton Growers", country: "AU", city: "St George", source: [-28.036, 148.589], destination: [34.6937, 135.5023], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            { id: 6, supplier: "Goldfields Fibre Group", country: "AU", city: "Narrabri", source: [-30.331, 149.783], destination: [34.6937, 135.5023], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            { id: 7, supplier: "Zambezi Valley Cotton Co.", country: "ZW", city: "Harare", source: [-17.8292, 31.0522], destination: [34.6937, 135.5023], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            
+            // Ginning
+            { id: 8, supplier: "Riverbend Cotton Ginning Pty Ltd", country: "AU", city: "Moree", source: [-29.4628, 149.841], destination: [34.6937, 135.5023], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric" },
+            { id: 9, supplier: "Southern Fibre Ginners", country: "AU", city: "Narrabri", source: [-30.331, 149.783], destination: [34.6937, 135.5023], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric" },
+            { id: 10, supplier: "Heartland Cotton Gin Co.", country: "US", city: "Houston", source: [29.7604, -95.3698], destination: [35.0211, 135.7539], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric" },
+            
+            // Spinning
+            { id: 11, supplier: "Setouchi Spinners Co., Ltd.", country: "JP", city: "Osaka", source: [34.6937, 135.5023], destination: [34.6100879, 133.4148237], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric" },
+            { id: 12, supplier: "Ishikawa Precision Spinning Works", country: "JP", city: "Osaka", source: [34.6937, 135.5023], destination: [34.6100879, 133.4148237], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric" },
+            { id: 13, supplier: "Kansai Recycled Yarn Mill", country: "JP", city: "Kyoto", source: [35.0211, 135.7539], destination: [34.6100879, 133.4148237], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric" },
+            
+            // Weaving & Dyeing
+            { id: 14, supplier: "Kuroki", country: "JP", city: "Okayama", source: [34.6100879, 133.4148237], destination: [34.603, 133.467], parent_supplier: "Kojima Indigo Rope Dyeing Co., Ltd.", parent_location: "JP", parent_city: "Ibara", stage: "Fabric process", level: 3, phase: "Forming Fabric", sub_phase: "Weaving", phase_description: "Interlacing yarns to produce woven fabrics", material: "Fabric" },
+            { id: 15, supplier: "Kojima Indigo Rope Dyeing Co., Ltd.", country: "JP", city: "Ibara", source: [34.603, 133.467], destination: [35.0211, 135.7539], parent_supplier: "Ibara Denim Laundry Works", parent_location: "JP", parent_city: "Kyoto", stage: "Fabric process", level: 3, phase: "Dyeing & Finishing", sub_phase: "Dyeing", phase_description: "Coloring yarns or fabrics using dyes or pigments", material: "Fabric" },
+            { id: 16, supplier: "Ibara Denim Laundry Works", country: "JP", city: "Kyoto", source: [35.0211, 135.7539], destination: [41.4444, -8.2962], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Fabric process", level: 3, phase: "Dyeing & Washing", sub_phase: "Washing", phase_description: "Pre-treating or softening fabric through industrial washing processes.", material: "Fabric" },
+            
+            // Hardware trims supply chain
+            { id: 17, supplier: "Andes Copper Mining Ltd.", country: "CL", city: "Santiago", source: [-33.4489, -70.6693], destination: [-33.0472, -71.6127], parent_supplier: "De Smelt co ltd.", parent_location: "CL", parent_city: "Valparaiso", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Mining", phase_description: "Extraction of raw minerals (such as iron ore, copper, or zinc) that will later be processed into metal components.", material: "Hardware" },
+            { id: 18, supplier: "De Smelt co ltd.", country: "CL", city: "Valparaiso", source: [-33.0472, -71.6127], destination: [43.877, 11.1022], parent_supplier: "Veneto Wire Processing SRL", parent_location: "IT", parent_city: "Prato", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Smelting", phase_description: "Heating and refining ores to extract base metals used for hardware trims.", material: "Hardware" },
+            { id: 19, supplier: "Veneto Wire Processing SRL", country: "IT", city: "Prato", source: [43.877, 11.1022], destination: [45.52, 11.33], parent_supplier: "ItalRod Metallurgy S.p.A.", parent_location: "IT", parent_city: "Arzignano", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Coil Preparation", phase_description: "Rolling and shaping refined metal into coils or sheets, ready for component production.", material: "Hardware" },
+            { id: 20, supplier: "ItalRod Metallurgy S.p.A.", country: "IT", city: "Arzignano", source: [45.52, 11.33], destination: [41.339, -8.562], parent_supplier: "Lusometal Finishing SA", parent_location: "PT", parent_city: "Trofa", stage: "Trims", level: 6, phase: "Wire mill", sub_phase: "Wiring", phase_description: "Drawing metal into thin wires used in zippers, snaps, and other small hardware elements.", material: "Hardware" },
+            { id: 21, supplier: "Lusometal Finishing SA", country: "PT", city: "Trofa", source: [41.339, -8.562], destination: [39.0375754, -8.9872353], parent_supplier: "YKK", parent_location: "PT", parent_city: "Lisboa", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Electroplating", phase_description: "Applying a protective or decorative metallic coating (e.g., nickel, brass, chrome) to hardware components.", material: "Hardware" },
+            { id: 22, supplier: "YKK", country: "PT", city: "Lisboa", source: [39.0375754, -8.9872353], destination: [41.4444, -8.2962], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Zipper & rivet manufacturing", phase_description: "Producing finished hardware pieces like zippers, rivets, snaps, and other fasteners ready for garment assembly.", material: "Hardware" },
+            
+            // Thread production chain
+            { id: 23, supplier: "Anatolia Spinners A.S.", country: "TR", city: "Denizli", source: [37.783, 29.0963], destination: [41.0082, 28.9784], parent_supplier: "EgeColor Tekstil Boya Ltd.", parent_location: "TR", parent_city: "Istanbul", stage: "Trims", level: 6, phase: "Spinning", sub_phase: "Spinning", phase_description: "Twisting/spinning cleaned cotton fibers into continuous yarns suitable for thread making.", material: "Cotton thread" },
+            { id: 24, supplier: "EgeColor Tekstil Boya Ltd.", country: "TR", city: "Istanbul", source: [41.0082, 28.9784], destination: [41.5388, -8.6151], parent_supplier: "Tintas do Atlantico Lda.", parent_location: "PT", parent_city: "Barcelos", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Dyeing", phase_description: "Coloring cotton threads to match garment specifications using reactive or natural dyes.", material: "Cotton thread" },
+            { id: 25, supplier: "Tintas do Atlantico Lda.", country: "PT", city: "Barcelos", source: [41.5388, -8.6151], destination: [41.388926, -8.4037969], parent_supplier: "Crafil", parent_location: "PT", parent_city: "Oliveira Sao Mateus", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Dyeing", phase_description: "Coloring cotton threads to match garment specifications using reactive or natural dyes.", material: "Cotton thread" },
+            { id: 26, supplier: "Crafil", country: "PT", city: "Oliveira Sao Mateus", source: [41.388926, -8.4037969], destination: [41.4444, -8.2962], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Thread winding", phase_description: "Winding dyed or raw thread onto spools, cones, or bobbins, preparing it for sewing and garment assembly.", material: "Cotton thread" },
+            
+            // Leather patch production
+            { id: 27, supplier: "ItalPelle Sourcing S.r.l.", country: "IT", city: "Santa Croce sull'Arno", source: [43.71, 10.77], destination: [45.52, 11.33], parent_supplier: "Conceria Valverde S.p.A", parent_location: "IT", parent_city: "Arzignano", stage: "Trims", level: 6, phase: "Slaughterhouse", sub_phase: "Hide supplier", phase_description: "Sourcing animal hides as a by-product of the meat industry.", material: "Leather patch" },
+            { id: 28, supplier: "Conceria Valverde S.p.A", country: "IT", city: "Arzignano", source: [45.52, 11.33], destination: [44.7797229, 10.847695], parent_supplier: "Cadica", parent_location: "IT", parent_city: "Modena", stage: "Trims", level: 6, phase: "Leather tanning", sub_phase: "Leather tanning", phase_description: "Stabilizing hides through chemical or vegetable tanning to create durable leather.", material: "Leather patch" },
+            { id: 29, supplier: "Cadica", country: "IT", city: "Modena", source: [44.7797229, 10.847695], destination: [41.4444, -8.2962], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Leather patch production", phase_description: "Polishing, dyeing, coating, or embossing hides for final look and performance.", material: "Leather patch" },
+            
+            // Labels
+            { id: 30, supplier: "Passamar", country: "PT", city: "Vilarinho das Cambas", source: [41.3833695, -8.5747734], destination: [41.4444, -8.2962], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Label production", sub_phase: "Label production", phase_description: "Manufacturing woven, printed, or embroidered labels that provide brand identity and care instructions for garments.", material: "Labels" },
+            
+            // Final assembly and warehouse
+            { id: 31, supplier: "Lisama", country: "PT", city: "Guimaraes", source: [41.4444, -8.2962], destination: [59.9290137, 10.8200294], parent_supplier: "Livid", parent_location: "NO", parent_city: "Oslo", stage: "Assembly", level: 4, phase: "Assembly", sub_phase: "Cut & Sew", phase_description: "Cutting and stitching panels and components together into garments.", material: "Product" },
+            { id: 32, supplier: "Livid", country: "NO", city: "Oslo", source: [59.9290137, 10.8200294], destination: null, parent_supplier: null, parent_location: null, parent_city: null, stage: "Warehouse", level: 5, phase: "Warehouse", sub_phase: "Product storing", phase_description: "Product is stored at our central warehouse in Oslo", material: null }
         ];
 
         const map = new mapboxgl.Map({
@@ -298,20 +387,15 @@
             zoom: 3
         });
 
-        // Track current popup to prevent multiple popups
+        const router = new MaritimeRouter();
         let currentPopup = null;
 
-        // Use black color for all elements
-        const stageColors = {
-            1: '#000000', // Black
-            2: '#000000', // Black
-            3: '#000000', // Black
-            4: '#000000', // Black
-            5: '#000000'  // Black
-        };
+        // Controls
+        const showArrowsCheckbox = document.getElementById('showArrows');
+        const showRoutesCheckbox = document.getElementById('showRoutes');
 
         map.on('load', async () => {
-            // Remove text labels
+            // Remove text labels for cleaner look
             const layers = map.getStyle().layers;
             layers.forEach((layer) => {
                 if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
@@ -319,330 +403,323 @@
                 }
             });
 
-            // Function to get maritime route using SeaRoute API
-            async function getMaritimeRoute(start, end) {
-                try {
-                    // Using SeaRoute API for actual maritime routing
-                    const response = await fetch(`https://api.searoute.org/route/v1/?origin=${start[1]},${start[0]}&destination=${end[1]},${end[0]}&units=km`);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.features && data.features[0] && data.features[0].geometry) {
-                            // Convert coordinates to [lat, lng] format
-                            return data.features[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                        }
-                    }
-                } catch (error) {
-                    console.log('SeaRoute API failed, trying alternative...');
-                }
+            await createRoutesAndPoints();
+            setupControls();
+        });
 
-                // Alternative: Create a manual maritime route approximation
-                return createMaritimeApproximation(start, end);
-            }
+        async function createRoutesAndPoints() {
+            // Create all route geometries
+            const routeFeatures = [];
+            const arrowFeatures = [];
 
-            // Function to create accurate maritime routes that follow coastlines and water bodies
-            function createMaritimeApproximation(start, end) {
-                const [startLat, startLng] = start;
-                const [endLat, endLng] = end;
-                
-                // Major maritime waypoints (actual ports and water passages)
-                const maritimeWaypoints = {
-                    // Major straits and canals
-                    suezNorth: [31.25, 32.3], // Northern Suez Canal entrance
-                    suezSouth: [29.97, 32.5], // Southern Suez Canal entrance
-                    gibraltarEast: [35.9, -5.3], // Eastern Gibraltar (Mediterranean side)
-                    gibraltarWest: [36.0, -5.8], // Western Gibraltar (Atlantic side)
-                    singaporeStrait: [1.2, 103.9], // Singapore Strait
-                    malaccaStrait: [4.0, 100.0], // Malacca Strait entrance
-                    doverStrait: [51.0, 1.4], // Dover Strait
-                    
-                    // Major ports and coastal points
-                    mumbai: [19.0, 72.8], // Mumbai port
-                    dubai: [25.2, 55.3], // Dubai port
-                    piraeus: [37.9, 23.7], // Athens port
-                    valencia: [39.5, -0.4], // Valencia port
-                    rotterdam: [51.9, 4.1], // Rotterdam port
-                    hamburg: [53.5, 10.0], // Hamburg port
-                    
-                    // Coastal navigation points
-                    redSeaExit: [12.6, 43.3], // Bab-el-Mandeb strait
-                    arabianSeaWest: [20.0, 58.0], // Western Arabian Sea
-                    bayOfBiscay: [45.0, -5.0], // Bay of Biscay
-                    northSeaEntry: [55.0, 2.0], // North Sea entry from Atlantic
-                    baltricEntry: [57.0, 10.0], // Baltic Sea entry
-                    
-                    // Ocean waypoints to avoid land
-                    pacificMid: [10.0, 140.0], // Mid Pacific
-                    indianOceanWest: [5.0, 70.0], // Western Indian Ocean
-                    atlanticEast: [40.0, -15.0], // Eastern Atlantic
-                    mediterraneanCenter: [36.0, 15.0], // Central Mediterranean
-                };
-
-                let waypoints = [start];
-
-                // Australia to Japan route (Pacific Ocean)
-                if (startLng > 140 && startLat < -20 && endLng > 130 && endLat > 30) {
-                    waypoints.push([startLat, 155]); // East of Australia into Pacific
-                    waypoints.push([0, 155]); // Equatorial Pacific
-                    waypoints.push([20, 145]); // North Pacific
-                    waypoints.push([30, 140]); // Approach Japan from east
-                }
-                
-                // Japan to Portugal route (Indian Ocean → Suez → Mediterranean → Atlantic)
-                else if (startLng > 130 && startLat > 30 && endLng < 0 && endLat > 35) {
-                    waypoints.push([30, 125]); // South from Japan
-                    waypoints.push([15, 120]); // South China Sea
-                    waypoints.push(maritimeWaypoints.singaporeStrait); // Singapore Strait
-                    waypoints.push(maritimeWaypoints.malaccaStrait); // Malacca Strait
-                    waypoints.push([6, 95]); // Andaman Sea
-                    waypoints.push(maritimeWaypoints.indianOceanWest); // Indian Ocean (avoid land)
-                    waypoints.push(maritimeWaypoints.arabianSeaWest); // Western Arabian Sea
-                    waypoints.push(maritimeWaypoints.redSeaExit); // Bab-el-Mandeb strait
-                    waypoints.push([20, 40]); // Red Sea navigation
-                    waypoints.push(maritimeWaypoints.suezSouth); // Suez Canal south
-                    waypoints.push(maritimeWaypoints.suezNorth); // Suez Canal north
-                    waypoints.push(maritimeWaypoints.mediterraneanCenter); // Mediterranean
-                    waypoints.push([35, 5]); // Western Mediterranean
-                    waypoints.push(maritimeWaypoints.gibraltarEast); // Gibraltar east
-                    waypoints.push(maritimeWaypoints.gibraltarWest); // Gibraltar west
-                    waypoints.push(maritimeWaypoints.atlanticEast); // Eastern Atlantic
-                    waypoints.push([42, -10]); // Atlantic approach to Portugal
-                }
-                
-                // Sweden to Portugal route (Baltic → North Sea → Atlantic)
-                else if (startLng > 10 && startLat > 55 && endLng < 0 && endLat > 35) {
-                    waypoints.push([56, 12]); // Exit Baltic Sea
-                    waypoints.push([57, 8]); // Skagerrak
-                    waypoints.push([58, 4]); // North Sea
-                    waypoints.push(maritimeWaypoints.doverStrait); // English Channel
-                    waypoints.push([49, -2]); // Western English Channel
-                    waypoints.push(maritimeWaypoints.bayOfBiscay); // Bay of Biscay
-                    waypoints.push([43, -9]); // Atlantic approach to Portugal
-                }
-                
-                // Portugal to Norway route (Atlantic → North Sea)
-                else if (startLng < 0 && startLat > 35 && endLng > 5 && endLat > 55) {
-                    waypoints.push([42, -12]); // Atlantic departure from Portugal
-                    waypoints.push([45, -10]); // Western Atlantic
-                    waypoints.push(maritimeWaypoints.bayOfBiscay); // Bay of Biscay
-                    waypoints.push([50, -5]); // Western English Channel
-                    waypoints.push(maritimeWaypoints.doverStrait); // Dover Strait
-                    waypoints.push(maritimeWaypoints.northSeaEntry); // North Sea entry
-                    waypoints.push([58, 8]); // North Sea to Norway
-                }
-                
-                // Short European coastal routes
-                else if (Math.abs(startLng - endLng) < 15 && Math.abs(startLat - endLat) < 15) {
-                    // For short routes, add offshore waypoints to follow coast
-                    const midLat = (startLat + endLat) / 2;
-                    const midLng = (startLng + endLng) / 2;
-                    
-                    // Determine if it's Atlantic or Mediterranean coast
-                    if (startLng < 0 || endLng < 0) {
-                        // Atlantic coast
-                        waypoints.push([midLat, Math.min(startLng, endLng) - 1]);
-                    } else {
-                        // European coastal waters
-                        waypoints.push([midLat + 1, midLng]);
-                    }
-                }
-
-                waypoints.push(end);
-                return waypoints;
-            }
-
-            // Function to check if route is international
-            function isInternationalRoute(sourceCountry, destCountry) {
-                return sourceCountry !== destCountry;
-            }
-
-            // Create route lines with maritime routes for international connections
             for (const item of supplyChainData) {
                 if (item.destination) {
-                    let routeCoordinates;
-                    
-                    if (isInternationalRoute(item.country, item.parent_location)) {
-                        // Use maritime route for international connections
-                        console.log(`Getting maritime route from ${item.country} to ${item.parent_location}`);
-                        const routePoints = await getMaritimeRoute(item.source, item.destination);
-                        routeCoordinates = routePoints.map(point => [point[1], point[0]]); // Convert to [lng, lat] for mapbox
-                    } else {
-                        // Use direct line for domestic routes
-                        routeCoordinates = [
-                            [item.source[1], item.source[0]], // [lng, lat]
-                            [item.destination[1], item.destination[0]]
-                        ];
-                    }
+                    const routeCoordinates = router.getOptimalRoute(item.source, item.destination);
+                    const mapCoordinates = routeCoordinates.map(coord => [coord[1], coord[0]]);
+                    const isInternational = item.country !== item.parent_location;
 
-                    // Add route line
-                    map.addSource(`route-${item.id}`, {
-                        'type': 'geojson',
-                        'data': {
-                            'type': 'Feature',
-                            'properties': {
-                                'stage': item.stage,
-                                'supplier': item.supplier,
-                                'level': item.level,
-                                'isInternational': isInternationalRoute(item.country, item.parent_location)
-                            },
-                            'geometry': {
-                                'type': 'LineString',
-                                'coordinates': routeCoordinates
-                            }
+                    // Add route feature
+                    routeFeatures.push({
+                        type: 'Feature',
+                        properties: {
+                            id: item.id,
+                            stage: item.stage,
+                            supplier: item.supplier,
+                            level: item.level,
+                            isInternational: isInternational,
+                            country: item.country,
+                            destination_country: item.parent_location
+                        },
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: mapCoordinates
+                        }
+                    });
+
+                    // Create arrows for this route
+                    if (mapCoordinates.length >= 2) {
+                        const arrows = createArrowsAlongRoute(mapCoordinates, isInternational ? 8 : 5);
+                        arrows.forEach(arrow => {
+                            arrowFeatures.push({
+                                type: 'Feature',
+                                properties: {
+                                    bearing: arrow.bearing,
+                                    routeId: item.id,
+                                    isInternational: isInternational
+                                },
+                                geometry: {
+                                    type: 'Point',
+                                    coordinates: arrow.coordinates
+                                }
+                            });
+                        });
+                    }
+                }
+            }
+
+            // Add routes source and layer
+            map.addSource('all-routes', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: routeFeatures
+                }
+            });
+
+            map.addLayer({
+                id: 'routes-domestic',
+                type: 'line',
+                source: 'all-routes',
+                filter: ['==', ['get', 'isInternational'], false],
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '#00AEEF',
+                    'line-width': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        1, 2,
+                        6, 3,
+                        12, 4
+                    ],
+                    'line-opacity': 0.8
+                }
+            });
+
+            map.addLayer({
+                id: 'routes-international',
+                type: 'line',
+                source: 'all-routes',
+                filter: ['==', ['get', 'isInternational'], true],
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '#00AEEF',
+                    'line-width': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        1, 1.5,
+                        6, 2,
+                        12, 3
+                    ],
+                    'line-opacity': 0.7,
+                    'line-dasharray': [3, 2]
+                }
+            });
+
+            // Add arrows
+            if (arrowFeatures.length > 0) {
+                const arrowSVG = `
+                    <svg width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 10 L10 3 L10 7 L17 7 L17 13 L10 13 L10 17 Z" fill="#00AEEF" stroke="#ffffff" stroke-width="1"/>
+                    </svg>
+                `;
+                const arrowDataURL = 'data:image/svg+xml;base64,' + btoa(arrowSVG);
+
+                const arrowImg = new Image();
+                arrowImg.onload = () => {
+                    map.addImage('direction-arrow', arrowImg);
+
+                    map.addSource('route-arrows', {
+                        type: 'geojson',
+                        data: {
+                            type: 'FeatureCollection',
+                            features: arrowFeatures
                         }
                     });
 
                     map.addLayer({
-                        'id': `route-${item.id}`,
-                        'type': 'line',
-                        'source': `route-${item.id}`,
-                        'layout': {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        'paint': {
-                            'line-color': '#000000',
-                            'line-width': isInternationalRoute(item.country, item.parent_location) ? 2 : 3,
-                            'line-opacity': 0.8
+                        id: 'route-arrows',
+                        type: 'symbol',
+                        source: 'route-arrows',
+                        layout: {
+                            'icon-image': 'direction-arrow',
+                            'icon-size': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                1, 0.7,
+                                6, 1.0,
+                                12, 1.5
+                            ],
+                            'icon-rotate': ['get', 'bearing'],
+                            'icon-rotation-alignment': 'map',
+                            'icon-allow-overlap': true,
+                            'icon-ignore-placement': true
                         }
                     });
-                }
+                };
+                arrowImg.src = arrowDataURL;
             }
 
-            // Add source points as circles
+            // Add supplier points
+            addSupplierPoints();
+        }
+
+        function createArrowsAlongRoute(coordinates, spacing = 6) {
+            const arrows = [];
+            if (coordinates.length < 2) return arrows;
+
+            let totalLength = 0;
+            const segmentLengths = [];
+
+            for (let i = 0; i < coordinates.length - 1; i++) {
+                const start = coordinates[i];
+                const end = coordinates[i + 1];
+                const segmentLength = Math.sqrt(
+                    Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2)
+                );
+                segmentLengths.push(segmentLength);
+                totalLength += segmentLength;
+            }
+
+            const numArrows = Math.max(1, Math.floor(totalLength / spacing));
+
+            for (let arrowIndex = 1; arrowIndex <= numArrows; arrowIndex++) {
+                const targetDistance = (arrowIndex / (numArrows + 1)) * totalLength;
+
+                let accumulatedDistance = 0;
+                let segmentIndex = 0;
+                let segmentProgress = 0;
+
+                for (let i = 0; i < segmentLengths.length; i++) {
+                    if (accumulatedDistance + segmentLengths[i] >= targetDistance) {
+                        segmentIndex = i;
+                        segmentProgress = (targetDistance - accumulatedDistance) / segmentLengths[i];
+                        break;
+                    }
+                    accumulatedDistance += segmentLengths[i];
+                }
+
+                const segmentStart = coordinates[segmentIndex];
+                const segmentEnd = coordinates[segmentIndex + 1] || segmentStart;
+
+                const arrowLng = segmentStart[0] + (segmentEnd[0] - segmentStart[0]) * segmentProgress;
+                const arrowLat = segmentStart[1] + (segmentEnd[1] - segmentStart[1]) * segmentProgress;
+
+                const segmentDeltaX = segmentEnd[0] - segmentStart[0];
+                const segmentDeltaY = segmentEnd[1] - segmentStart[1];
+                const segmentBearing = Math.atan2(segmentDeltaX, segmentDeltaY) * (180 / Math.PI) + 90;
+
+                arrows.push({
+                    coordinates: [arrowLng, arrowLat],
+                    bearing: segmentBearing
+                });
+            }
+
+            return arrows;
+        }
+
+        function addSupplierPoints() {
+            // Source points
             map.addSource('source-points', {
-                'type': 'geojson',
-                'data': {
-                    'type': 'FeatureCollection',
-                    'features': supplyChainData.map(item => ({
-                        'type': 'Feature',
-                        'properties': {
-                            'supplier': item.supplier,
-                            'stage': item.stage,
-                            'level': item.level,
-                            'country': item.country,
-                            'phase': item.phase,
-                            'sub_phase': item.sub_phase || 'N/A',
-                            'coordinates': `${item.source[0].toFixed(4)}, ${item.source[1].toFixed(4)}`,
-                            'type': 'source'
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: supplyChainData.map(item => ({
+                        type: 'Feature',
+                        properties: {
+                            supplier: item.supplier,
+                            stage: item.stage,
+                            level: item.level,
+                            country: item.country,
+                            city: item.city,
+                            phase: item.phase,
+                            sub_phase: item.sub_phase || 'N/A',
+                            phase_description: item.phase_description,
+                            material: item.material,
+                            type: 'source'
                         },
-                        'geometry': {
-                            'type': 'Point',
-                            'coordinates': [item.source[1], item.source[0]]
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [item.source[1], item.source[0]]
                         }
                     }))
                 }
             });
 
-            // Add destination points as circles
+            // Destination points
             const destinationFeatures = supplyChainData
                 .filter(item => item.destination && item.parent_supplier)
                 .map(item => ({
-                    'type': 'Feature',
-                    'properties': {
-                        'supplier': item.parent_supplier,
-                        'country': item.parent_location,
-                        'coordinates': `${item.destination[0].toFixed(4)}, ${item.destination[1].toFixed(4)}`,
-                        'type': 'destination'
+                    type: 'Feature',
+                    properties: {
+                        supplier: item.parent_supplier,
+                        country: item.parent_location,
+                        city: item.parent_city,
+                        type: 'destination'
                     },
-                    'geometry': {
-                        'type': 'Point',
-                        'coordinates': [item.destination[1], item.destination[0]]
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [item.destination[1], item.destination[0]]
                     }
                 }));
 
             map.addSource('destination-points', {
-                'type': 'geojson',
-                'data': {
-                    'type': 'FeatureCollection',
-                    'features': destinationFeatures
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: destinationFeatures
                 }
             });
 
-            // Create custom pin SVG
-            const pinSVG = `
-               <svg fill="#000000" height="8px" width="8px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 21.041 21.041" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g id="c88_square"> <path d="M20.51,0H0.524C0.267,0,0.056,0.209,0.056,0.469v20.104c0,0.255,0.211,0.468,0.468,0.468H20.51 c0.263,0,0.476-0.213,0.476-0.468V0.469C20.986,0.209,20.772,0,20.51,0z"></path> </g> <g id="Capa_1_233_"> </g> </g> </g></svg>
-            `;
+            // Add circle layers for points
+            map.addLayer({
+                id: 'source-points',
+                type: 'circle',
+                source: 'source-points',
+                paint: {
+                    'circle-radius': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        1, 4,
+                        6, 6,
+                        12, 8
+                    ],
+                    'circle-color': '#00AEEF',
+                    'circle-opacity': 1,
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
 
-            // Convert SVG to data URL
-            const pinDataURL = 'data:image/svg+xml;base64,' + btoa(pinSVG);
+            map.addLayer({
+                id: 'destination-points',
+                type: 'circle',
+                source: 'destination-points',
+                paint: {
+                    'circle-radius': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        1, 3,
+                        6, 4,
+                        12, 6
+                    ],
+                    'circle-color': '#666666',
+                    'circle-opacity': 0.8,
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
 
-            // Load the custom pin image
-            const img = new Image();
-            img.onload = () => {
-                map.addImage('custom-pin', img);
-                
-                // Add source points layer with pins
-                map.addLayer({
-                    'id': 'source-points',
-                    'type': 'symbol',
-                    'source': 'source-points',
-                    'layout': {
-                        'icon-image': 'custom-pin',
-                        'icon-size': 1.2,
-                        'icon-anchor': 'bottom',
-                        'icon-allow-overlap': true,
-                        'icon-ignore-placement': true
-                    }
-                });
+            setupEventHandlers();
+            fitMapToBounds();
+        }
 
-                // Add destination points layer with pins
-                map.addLayer({
-                    'id': 'destination-points',
-                    'type': 'symbol',
-                    'source': 'destination-points',
-                    'layout': {
-                        'icon-image': 'custom-pin',
-                        'icon-size': 0.8,
-                        'icon-anchor': 'bottom',
-                        'icon-allow-overlap': true,
-                        'icon-ignore-placement': true
-                    }
-                });
-            };
-            
-            img.onerror = () => {
-                console.error('Error loading custom pin, falling back to circles');
-                addCircleLayers();
-            };
-            
-            img.src = pinDataURL;
-
-            // Fallback function for circle layers
-            function addCircleLayers() {
-                map.addLayer({
-                    'id': 'source-points',
-                    'type': 'circle',
-                    'source': 'source-points',
-                    'paint': {
-                        'circle-radius': 6,
-                        'circle-color': '#000000',
-                        'circle-opacity': 1,
-                        'circle-stroke-width': 0
-                    }
-                });
-
-                map.addLayer({
-                    'id': 'destination-points',
-                    'type': 'circle',
-                    'source': 'destination-points',
-                    'paint': {
-                        'circle-radius': 4,
-                        'circle-color': '#000000',
-                        'circle-opacity': 1,
-                        'circle-stroke-width': 0
-                    }
-                });
-            }
-
-            // Function to close current popup and create new one
+        function setupEventHandlers() {
             function showPopup(lngLat, content) {
-                // Close existing popup if it exists
                 if (currentPopup) {
                     currentPopup.remove();
                 }
-                
-                // Create new popup
+
                 currentPopup = new mapboxgl.Popup({
                     offset: 25,
                     closeButton: true,
@@ -652,77 +729,91 @@
                     .setHTML(content)
                     .addTo(map);
 
-                // Clear the reference when popup is closed
                 currentPopup.on('close', () => {
                     currentPopup = null;
                 });
             }
 
-            // Add click events for popups with enhanced styling
             map.on('click', 'source-points', (e) => {
-                const properties = e.features[0].properties;
+                const props = e.features[0].properties;
                 const popupContent = `
-                    <div class="stage-popup">
-                        <div class="phase-section">
-                            <div class="phase-title">${properties.phase}</div>
-                            <p class="sub-phase-title">${properties.sub_phase}</p>
-                            <div class="stage-badge">${properties.level}: ${properties.stage}</div>
-                        </div>
+                    <div>
+                        <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
+                        <div class="stage-title">${props.phase}</div>
+                        <div class="supplier-name">${props.supplier}</div>
                         
-                        <div class="supplier-section">
-                            <div class="supplier-label">Supplier</div>
-                            <p class="supplier-name">${properties.supplier}</p>
-                        </div>
-                        
-                        <div class="location-section">
+                        <div class="detail-section">
                             <div class="detail-label">Location</div>
-                            <p class="location-value">${properties.country}</p>
+                            <div class="detail-value">${props.city}, ${props.country}</div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-label">Process</div>
+                            <div class="detail-value">${props.sub_phase}</div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-label">Material</div>
+                            <div class="detail-value">${props.material}</div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-label">Description</div>
+                            <div class="detail-value">${props.phase_description}</div>
                         </div>
                     </div>
                 `;
-                
+
                 showPopup(e.lngLat, popupContent);
             });
 
             map.on('click', 'destination-points', (e) => {
-                const properties = e.features[0].properties;
+                const props = e.features[0].properties;
                 const popupContent = `
-                    <div class="stage-popup">
-                        <div class="phase-section">
-                            <div class="phase-title">Destination Point</div>
-                            <div class="stage-badge">Destination</div>
-                        </div>
+                    <div>
+                        <div class="stage-badge">Destination</div>
+                        <div class="stage-title">${props.supplier}</div>
                         
-                        <div class="supplier-section">
-                            <div class="supplier-label">Supplier</div>
-                            <p class="supplier-name">${properties.supplier}</p>
-                        </div>
-                        
-                        <div class="location-section">
+                        <div class="detail-section">
                             <div class="detail-label">Location</div>
-                            <p class="location-value">${properties.country}</p>
+                            <div class="detail-value">${props.city}, ${props.country}</div>
                         </div>
                     </div>
                 `;
-                
+
                 showPopup(e.lngLat, popupContent);
             });
 
-            // Change cursor on hover
-            map.on('mouseenter', 'source-points', () => {
-                map.getCanvas().style.cursor = 'pointer';
+            // Cursor changes
+            ['source-points', 'destination-points'].forEach(layer => {
+                map.on('mouseenter', layer, () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+                map.on('mouseleave', layer, () => {
+                    map.getCanvas().style.cursor = '';
+                });
             });
-            map.on('mouseleave', 'source-points', () => {
-                map.getCanvas().style.cursor = '';
-            });
-            map.on('mouseenter', 'destination-points', () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-            map.on('mouseleave', 'destination-points', () => {
-                map.getCanvas().style.cursor = '';
+        }
+
+        function setupControls() {
+            showArrowsCheckbox.addEventListener('change', (e) => {
+                const visibility = e.target.checked ? 'visible' : 'none';
+                if (map.getLayer('route-arrows')) {
+                    map.setLayoutProperty('route-arrows', 'visibility', visibility);
+                }
             });
 
-            // Fit map to show all points
+            showRoutesCheckbox.addEventListener('change', (e) => {
+                const visibility = e.target.checked ? 'visible' : 'none';
+                ['routes-domestic', 'routes-international'].forEach(layerId => {
+                    if (map.getLayer(layerId)) {
+                        map.setLayoutProperty(layerId, 'visibility', visibility);
+                    }
+                });
+            });
+        }
+
+        function fitMapToBounds() {
             const allCoordinates = [];
             supplyChainData.forEach(item => {
                 allCoordinates.push([item.source[1], item.source[0]]);
@@ -734,9 +825,8 @@
             const bounds = new mapboxgl.LngLatBounds();
             allCoordinates.forEach(coord => bounds.extend(coord));
             map.fitBounds(bounds, { padding: 50 });
-        });
-        
-        // Add error handling
+        }
+
         map.on('error', (e) => {
             console.error('Mapbox error:', e);
             document.getElementById('map').innerHTML = `
