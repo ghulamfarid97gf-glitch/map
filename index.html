@@ -71,7 +71,7 @@
 
         .stage-badge {
             display: inline-block;
-            background: #00AEEF;
+            background: #000000;
             color: white;
             padding: 6px 12px;
             border-radius: 12px;
@@ -127,11 +127,11 @@
         .legend-line {
             width: 20px;
             height: 2px;
-            background: #00AEEF;
+            background: #000000;
         }
 
         .legend-line.dashed {
-            background: repeating-linear-gradient(90deg, #00AEEF 0, #00AEEF 4px, transparent 4px, transparent 8px);
+            background: repeating-linear-gradient(90deg, #000000 0, #000000 4px, transparent 4px, transparent 8px);
         }
 
         .mapboxgl-ctrl-attrib,
@@ -448,7 +448,7 @@
                 }
             });
 
-            // Domestic routes (solid lines)
+            // Domestic routes (solid black lines)
             map.addLayer({
                 id: 'routes-domestic',
                 type: 'line',
@@ -459,7 +459,7 @@
                     'line-cap': 'round'
                 },
                 paint: {
-                    'line-color': '#00AEEF',
+                    'line-color': '#000000',
                     'line-width': [
                         'interpolate',
                         ['linear'],
@@ -468,11 +468,11 @@
                         6, 3,
                         12, 4
                     ],
-                    'line-opacity': 0.8
+                    'line-opacity': 0.5
                 }
             });
 
-            // International routes (dashed lines)
+            // International routes (dashed black lines)
             map.addLayer({
                 id: 'routes-international',
                 type: 'line',
@@ -483,7 +483,7 @@
                     'line-cap': 'round'
                 },
                 paint: {
-                    'line-color': '#00AEEF',
+                    'line-color': '#000000',
                     'line-width': [
                         'interpolate',
                         ['linear'],
@@ -492,7 +492,7 @@
                         6, 3,
                         12, 4
                     ],
-                    'line-opacity': 0.7,
+                    // 'line-opacity': 0.7,
                     'line-dasharray': [3, 2]
                 }
             });
@@ -533,7 +533,7 @@
             if (arrowFeatures.length > 0) {
                 const arrowSVG = `
                     <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3 10 L10 3 L10 7 L17 7 L17 13 L10 13 L10 17 Z" fill="#00AEEF" stroke="#ffffff" stroke-width="1"/>
+                        <path d="M3 10 L10 3 L10 7 L17 7 L17 13 L10 13 L10 17 Z" fill="#000000" stroke="#ffffff" stroke-width="1"/>
                     </svg>
                 `;
                 const arrowDataURL = 'data:image/svg+xml;base64,' + btoa(arrowSVG);
@@ -584,7 +584,22 @@
         async function addCustomPinIcons() {
             // Create custom pin SVG for source points
             const sourcePinSVG = `
-                <svg fill="#00AEEF" height="12px" width="12px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 21.041 21.041" xml:space="preserve">
+                <svg fill="#000000" height="12px" width="12px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 21.041 21.041" xml:space="preserve">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                    <g id="SVGRepo_iconCarrier">
+                        <g>
+                            <g id="c88_square">
+                                <path d="M20.51,0H0.524C0.267,0,0.056,0.209,0.056,0.469v20.104c0,0.255,0.211,0.468,0.468,0.468H20.51 c0.263,0,0.476-0.213,0.476-0.468V0.469C20.986,0.209,20.772,0,20.51,0z" stroke="#ffffff" stroke-width="0.5"></path>
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+            `;
+
+            // Create custom pin SVG for destination points
+            const destinationPinSVG = `
+                <svg fill="#000000" height="10px" width="10px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 21.041 21.041" xml:space="preserve">
                     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
                     <g id="SVGRepo_iconCarrier">
@@ -598,7 +613,7 @@
             `;
 
             const sourcePinDataURL = 'data:image/svg+xml;base64,' + btoa(sourcePinSVG);
-            const destinationPinDataURL = 'data:image/svg+xml;base64,' + btoa(sourcePinSVG);
+            const destinationPinDataURL = 'data:image/svg+xml;base64,' + btoa(destinationPinSVG);
 
             return new Promise((resolve) => {
                 let loadedCount = 0;
@@ -815,6 +830,7 @@
                         <div class="stage-title">${props.phase}</div>
                         <div class="supplier-name">${props.supplier}</div>
                          <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
+                        
                         <div class="detail-section">
                             <div class="detail-label">Location</div>
                             <div class="detail-value">${props.city}, ${props.country}</div>
@@ -833,10 +849,11 @@
             map.on('click', 'destination-points', (e) => {
                 const props = e.features[0].properties;
                 const popupContent = `
-                    <div>
-                        <div class="stage-badge">Destination</div>
+                     <div>
+                        <div class="stage-title">${props.phase}</div>
                         <div class="supplier-name">${props.supplier}</div>
                          <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
+                        
                         <div class="detail-section">
                             <div class="detail-label">Location</div>
                             <div class="detail-value">${props.city}, ${props.country}</div>
