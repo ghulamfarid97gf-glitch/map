@@ -139,6 +139,26 @@
         .mapboxgl-ctrl-bottom-left {
             display: none !important;
         }
+
+        .multi-supplier-popup {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .supplier-item {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .supplier-item:hover {
+            background-color: #f3f4f6;
+        }
+
+        .supplier-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -191,7 +211,7 @@
         class OptimizedMaritimeRouter {
             constructor() {
                 this.routeCache = new Map();
-                this.domesticThreshold = 1000; // Routes shorter than this are domestic
+                this.domesticThreshold = 1000;
             }
 
             calculateDistance(coord1, coord2) {
@@ -242,102 +262,101 @@
             }
 
             getEssentialWaypoints(startCountry, endCountry) {
-                // Australia to US - via Cape Horn
                 if (startCountry === 'AU' && endCountry === 'US') {
                     return [MARITIME_WAYPOINTS.CAPE_HORN];
                 }
-
-                // Australia to Japan - via Singapore
                 if (startCountry === 'AU' && endCountry === 'JP') {
                     return [MARITIME_WAYPOINTS.SINGAPORE];
                 }
-
-                // Zimbabwe to Japan - via Durban and Singapore
                 if (startCountry === 'ZW' && endCountry === 'JP') {
                     return [MARITIME_WAYPOINTS.DURBAN, MARITIME_WAYPOINTS.SINGAPORE];
                 }
-
-                // Japan to Portugal - via Singapore, Suez, Gibraltar
                 if (startCountry === 'JP' && endCountry === 'PT') {
                     return [MARITIME_WAYPOINTS.SINGAPORE, MARITIME_WAYPOINTS.SUEZ_CANAL, MARITIME_WAYPOINTS.GIBRALTAR];
                 }
-
-                // Chile to Italy - via Gibraltar
                 if (startCountry === 'CL' && endCountry === 'IT') {
                     return [MARITIME_WAYPOINTS.GIBRALTAR];
                 }
-
-                // Turkey to Portugal - via Gibraltar
                 if (startCountry === 'TR' && endCountry === 'PT') {
                     return [MARITIME_WAYPOINTS.GIBRALTAR];
                 }
-
-                // Italy to Portugal - via Gibraltar
                 if (startCountry === 'IT' && endCountry === 'PT') {
                     return [MARITIME_WAYPOINTS.GIBRALTAR];
                 }
-
-                // Portugal to Norway - via Rotterdam
                 if (startCountry === 'PT' && endCountry === 'NO') {
                     return [MARITIME_WAYPOINTS.ROTTERDAM];
                 }
-
-                // Default: direct route
                 return [];
             }
         }
 
         // Supply chain data
         const supplyChainData = [
-            // Cotton farming sources
-            { id: 1, supplier: "Southern Cross Cotton Co.", country: "AU", city: "Moree", source: [149.841, -29.4628], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
-            { id: 2, supplier: "Outback Fibre Exports", country: "AU", city: "Toowoomba", source: [151.953, -27.5606], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
-            { id: 3, supplier: "Prairie Fields Cotton LLC", country: "US", city: "Lubbock", source: [-101.8552, 33.5779], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
-            { id: 4, supplier: "Murray River Cotton Traders", country: "AU", city: "Griffith", source: [146.0583, -34.2889], destination: [-95.3698, 29.7604], parent_supplier: "Heartland Cotton Gin Co.", parent_location: "US", parent_city: "Houston", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
-            { id: 5, supplier: "Sunland Cotton Growers", country: "AU", city: "St George", source: [148.589, -28.036], destination: [135.5023, 34.6937], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
-            { id: 6, supplier: "Goldfields Fibre Group", country: "AU", city: "Narrabri", source: [149.783, -30.331], destination: [135.5023, 34.6937], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
-            { id: 7, supplier: "Zambezi Valley Cotton Co.", country: "ZW", city: "Harare", source: [31.0522, -17.8292], destination: [135.5023, 34.6937], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric" },
+            // Raw Materials - Cotton farming sources
+            { id: 1, supplier: "Southern Cross Cotton Co.", country: "AU", city: "Moree", source: [149.841, -29.4628], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 2, supplier: "Outback Fibre Exports", country: "AU", city: "Toowoomba", source: [151.953, -27.5606], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 3, supplier: "Prairie Fields Cotton LLC", country: "US", city: "Lubbock", source: [-101.8552, 33.5779], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 4, supplier: "Murray River Cotton Traders", country: "AU", city: "Griffith", source: [146.0583, -34.2889], destination: [-95.3698, 29.7604], parent_supplier: "Heartland Cotton Gin Co.", parent_location: "US", parent_city: "Houston", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 5, supplier: "Sunland Cotton Growers", country: "AU", city: "St George", source: [148.589, -28.036], destination: [135.5023, 34.6937], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 6, supplier: "Goldfields Fibre Group", country: "AU", city: "Narrabri", source: [149.783, -30.331], destination: [135.5023, 34.6937], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 7, supplier: "Blue Horizon Cotton Exports", country: "AU", city: "St George", source: [148.589, -28.036], destination: [135.5023, 34.6937], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 8, supplier: "Coral Coast Cotton Co.", country: "AU", city: "Moree", source: [149.841, -29.4628], destination: [135.5023, 34.6937], parent_supplier: "Ishikawa Precision Spinning Works", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 9, supplier: "Delta Plains Cotton Inc.", country: "US", city: "Memphis", source: [-90.049, 35.1495], destination: [149.841, -29.4628], parent_supplier: "Riverbend Cotton Ginning Pty Ltd", parent_location: "AU", parent_city: "Moree", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 10, supplier: "Lone Star Cotton Producers", country: "US", city: "Houston", source: [-95.3698, 29.7604], destination: [149.783, -30.331], parent_supplier: "Southern Fibre Ginners", parent_location: "AU", parent_city: "Narrabri", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
+            { id: 11, supplier: "Zambezi Valley Cotton Co.", country: "ZW", city: "Harare", source: [31.0522, -17.8292], destination: [135.5023, 34.6937], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers.", material: "Fabric", is_demo: true },
             
             // Ginning
-            { id: 8, supplier: "Riverbend Cotton Ginning Pty Ltd", country: "AU", city: "Moree", source: [149.841, -29.4628], destination: [135.5023, 34.6937], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric" },
-            { id: 9, supplier: "Southern Fibre Ginners", country: "AU", city: "Narrabri", source: [149.783, -30.331], destination: [135.5023, 34.6937], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric" },
-            { id: 10, supplier: "Heartland Cotton Gin Co.", country: "US", city: "Houston", source: [-95.3698, 29.7604], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric" },
+            { id: 12, supplier: "Riverbend Cotton Ginning Pty Ltd", country: "AU", city: "Moree", source: [149.841, -29.4628], destination: [135.5023, 34.6937], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric", is_demo: true },
+            { id: 13, supplier: "Southern Fibre Ginners", country: "AU", city: "Narrabri", source: [149.783, -30.331], destination: [135.5023, 34.6937], parent_supplier: "Setouchi Spinners Co., Ltd.", parent_location: "JP", parent_city: "Osaka", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric", is_demo: true },
+            { id: 14, supplier: "Heartland Cotton Gin Co.", country: "US", city: "Houston", source: [-95.3698, 29.7604], destination: [135.7539, 35.0211], parent_supplier: "Kansai Recycled Yarn Mill", parent_location: "JP", parent_city: "Kyoto", stage: "Raw Materials", level: 1, phase: "Ginning", sub_phase: "Ginning", phase_description: "Separating cotton fibers from seeds and cleaning them for spinning.", material: "Fabric", is_demo: true },
             
-            // Spinning
-            { id: 11, supplier: "Setouchi Spinners Co., Ltd.", country: "JP", city: "Osaka", source: [135.5023, 34.6937], destination: [133.4148237, 34.6100879], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric" },
-            { id: 12, supplier: "Ishikawa Precision Spinning Works", country: "JP", city: "Osaka", source: [135.5023, 34.6937], destination: [133.4148237, 34.6100879], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric" },
-            { id: 13, supplier: "Kansai Recycled Yarn Mill", country: "JP", city: "Kyoto", source: [135.7539, 35.0211], destination: [133.4148237, 34.6100879], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric" },
+            // Yarn - Spinning
+            { id: 15, supplier: "Setouchi Spinners Co., Ltd.", country: "JP", city: "Osaka", source: [135.5023, 34.6937], destination: [133.4148237, 34.6100879], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric", is_demo: true },
+            { id: 16, supplier: "Ishikawa Precision Spinning Works", country: "JP", city: "Osaka", source: [135.5023, 34.6937], destination: [133.4148237, 34.6100879], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric", is_demo: true },
+            { id: 17, supplier: "Kansai Recycled Yarn Mill", country: "JP", city: "Kyoto", source: [135.7539, 35.0211], destination: [133.4148237, 34.6100879], parent_supplier: "Kuroki", parent_location: "JP", parent_city: "Okayama", stage: "Yarn", level: 2, phase: "Spinning", sub_phase: "Spinning", phase_description: "Transforming raw fibers into continuous yarn.", material: "Fabric", is_demo: true },
             
-            // Weaving & Dyeing
-            { id: 14, supplier: "Kuroki", country: "JP", city: "Okayama", source: [133.4148237, 34.6100879], destination: [133.467, 34.603], parent_supplier: "Kojima Indigo Rope Dyeing Co., Ltd.", parent_location: "JP", parent_city: "Ibara", stage: "Fabric process", level: 3, phase: "Forming Fabric", sub_phase: "Weaving", phase_description: "Interlacing yarns to produce woven fabrics", material: "Fabric" },
-            { id: 15, supplier: "Kojima Indigo Rope Dyeing Co., Ltd.", country: "JP", city: "Ibara", source: [133.467, 34.603], destination: [135.7539, 35.0211], parent_supplier: "Ibara Denim Laundry Works", parent_location: "JP", parent_city: "Kyoto", stage: "Fabric process", level: 3, phase: "Dyeing & Finishing", sub_phase: "Dyeing", phase_description: "Coloring yarns or fabrics using dyes or pigments", material: "Fabric" },
-            { id: 16, supplier: "Ibara Denim Laundry Works", country: "JP", city: "Kyoto", source: [135.7539, 35.0211], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Fabric process", level: 3, phase: "Dyeing & Washing", sub_phase: "Washing", phase_description: "Pre-treating or softening fabric through industrial washing processes.", material: "Fabric" },
+            // Fabric Process
+            { id: 18, supplier: "Kuroki", country: "JP", city: "Okayama", source: [133.4148237, 34.6100879], destination: [133.467, 34.603], parent_supplier: "Kojima Indigo Rope Dyeing Co., Ltd.", parent_location: "JP", parent_city: "Ibara", stage: "Fabric process", level: 3, phase: "Forming Fabric", sub_phase: "Weaving", phase_description: "Interlacing yarns to produce woven fabrics", material: "Fabric", is_demo: false },
+            { id: 19, supplier: "Kojima Indigo Rope Dyeing Co., Ltd.", country: "JP", city: "Ibara", source: [133.467, 34.603], destination: [135.7539, 35.0211], parent_supplier: "Ibara Denim Laundry Works", parent_location: "JP", parent_city: "Kyoto", stage: "Fabric process", level: 3, phase: "Dyeing & Finishing", sub_phase: "Dyeing", phase_description: "Coloring yarns or fabrics using dyes or pigments", material: "Fabric", is_demo: true },
+            { id: 20, supplier: "Ibara Denim Laundry Works", country: "JP", city: "Kyoto", source: [135.7539, 35.0211], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Fabric process", level: 3, phase: "Dyeing & Washing", sub_phase: "Washing", phase_description: "Pre-treating or softening fabric through industrial washing processes.", material: "Fabric", is_demo: true },
             
-            // Hardware trims supply chain
-            { id: 17, supplier: "Andes Copper Mining Ltd.", country: "CL", city: "Santiago", source: [-70.6693, -33.4489], destination: [-71.6127, -33.0472], parent_supplier: "De Smelt co ltd.", parent_location: "CL", parent_city: "Valparaiso", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Mining", phase_description: "Extraction of raw minerals (such as iron ore, copper, or zinc) that will later be processed into metal components.", material: "Hardware" },
-            { id: 18, supplier: "De Smelt co ltd.", country: "CL", city: "Valparaiso", source: [-71.6127, -33.0472], destination: [11.1022, 43.877], parent_supplier: "Veneto Wire Processing SRL", parent_location: "IT", parent_city: "Prato", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Smelting", phase_description: "Heating and refining ores to extract base metals used for hardware trims.", material: "Hardware" },
-            { id: 19, supplier: "Veneto Wire Processing SRL", country: "IT", city: "Prato", source: [11.1022, 43.877], destination: [11.33, 45.52], parent_supplier: "ItalRod Metallurgy S.p.A.", parent_location: "IT", parent_city: "Arzignano", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Coil Preparation", phase_description: "Rolling and shaping refined metal into coils or sheets, ready for component production.", material: "Hardware" },
-            { id: 20, supplier: "ItalRod Metallurgy S.p.A.", country: "IT", city: "Arzignano", source: [11.33, 45.52], destination: [-8.562, 41.339], parent_supplier: "Lusometal Finishing SA", parent_location: "PT", parent_city: "Trofa", stage: "Trims", level: 6, phase: "Wire mill", sub_phase: "Wiring", phase_description: "Drawing metal into thin wires used in zippers, snaps, and other small hardware elements.", material: "Hardware" },
-            { id: 21, supplier: "Lusometal Finishing SA", country: "PT", city: "Trofa", source: [-8.562, 41.339], destination: [-8.9872353, 39.0375754], parent_supplier: "YKK", parent_location: "PT", parent_city: "Lisboa", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Electroplating", phase_description: "Applying a protective or decorative metallic coating (e.g., nickel, brass, chrome) to hardware components.", material: "Hardware" },
-            { id: 22, supplier: "YKK", country: "PT", city: "Lisboa", source: [-8.9872353, 39.0375754], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Zipper & rivet manufacturing", phase_description: "Producing finished hardware pieces like zippers, rivets, snaps, and other fasteners ready for garment assembly.", material: "Hardware" },
+            // Trims - Hardware
+            { id: 21, supplier: "Andes Copper Mining Ltd.", country: "CL", city: "Santiago", source: [-70.6693, -33.4489], destination: [-71.6127, -33.0472], parent_supplier: "De Smelt co ltd.", parent_location: "CL", parent_city: "Valparaiso", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Mining", phase_description: "Extraction of raw minerals (such as iron ore, copper, or zinc) that will later be processed into metal components.", material: "Hardware", is_demo: true },
+            { id: 22, supplier: "De Smelt co ltd.", country: "CL", city: "Valparaiso", source: [-71.6127, -33.0472], destination: [11.1022, 43.877], parent_supplier: "Veneto Wire Processing SRL", parent_location: "IT", parent_city: "Prato", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Smelting", phase_description: "Heating and refining ores to extract base metals used for hardware trims.", material: "Hardware", is_demo: true },
+            { id: 23, supplier: "Veneto Wire Processing SRL", country: "IT", city: "Prato", source: [11.1022, 43.877], destination: [11.33, 45.52], parent_supplier: "ItalRod Metallurgy S.p.A.", parent_location: "IT", parent_city: "Arzignano", stage: "Trims", level: 6, phase: "Mineral processes", sub_phase: "Coil Preparation", phase_description: "Rolling and shaping refined metal into coils or sheets, ready for component production.", material: "Hardware", is_demo: true },
+            { id: 24, supplier: "ItalRod Metallurgy S.p.A.", country: "IT", city: "Arzignano", source: [11.33, 45.52], destination: [-8.562, 41.339], parent_supplier: "Lusometal Finishing SA", parent_location: "PT", parent_city: "Trofa", stage: "Trims", level: 6, phase: "Wire mill", sub_phase: "Wiring", phase_description: "Drawing metal into thin wires used in zippers, snaps, and other small hardware elements.", material: "Hardware", is_demo: true },
+            { id: 25, supplier: "Lusometal Finishing SA", country: "PT", city: "Trofa", source: [-8.562, 41.339], destination: [-8.9872353, 39.0375754], parent_supplier: "YKK", parent_location: "PT", parent_city: "Lisboa", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Electroplating", phase_description: "Applying a protective or decorative metallic coating (e.g., nickel, brass, chrome) to hardware components.", material: "Hardware", is_demo: true },
+            { id: 26, supplier: "YKK", country: "PT", city: "Lisboa", source: [-8.9872353, 39.0375754], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Zipper & rivet manufacturing", phase_description: "Producing finished hardware pieces like zippers, rivets, snaps, and other fasteners ready for garment assembly.", material: "Hardware", is_demo: false },
             
-            // Thread production chain
-            { id: 23, supplier: "Anatolia Spinners A.S.", country: "TR", city: "Denizli", source: [29.0963, 37.783], destination: [28.9784, 41.0082], parent_supplier: "EgeColor Tekstil Boya Ltd.", parent_location: "TR", parent_city: "Istanbul", stage: "Trims", level: 6, phase: "Spinning", sub_phase: "Spinning", phase_description: "Twisting/spinning cleaned cotton fibers into continuous yarns suitable for thread making.", material: "Cotton thread" },
-            { id: 24, supplier: "EgeColor Tekstil Boya Ltd.", country: "TR", city: "Istanbul", source: [28.9784, 41.0082], destination: [-8.6151, 41.5388], parent_supplier: "Tintas do Atlantico Lda.", parent_location: "PT", parent_city: "Barcelos", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Dyeing", phase_description: "Coloring cotton threads to match garment specifications using reactive or natural dyes.", material: "Cotton thread" },
-            { id: 25, supplier: "Tintas do Atlantico Lda.", country: "PT", city: "Barcelos", source: [-8.6151, 41.5388], destination: [-8.4037969, 41.388926], parent_supplier: "Crafil", parent_location: "PT", parent_city: "Oliveira Sao Mateus", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Dyeing", phase_description: "Coloring cotton threads to match garment specifications using reactive or natural dyes.", material: "Cotton thread" },
-            { id: 26, supplier: "Crafil", country: "PT", city: "Oliveira Sao Mateus", source: [-8.4037969, 41.388926], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Thread winding", phase_description: "Winding dyed or raw thread onto spools, cones, or bobbins, preparing it for sewing and garment assembly.", material: "Cotton thread" },
+            // Trims - Thread
+            { id: 27, supplier: "Southern Bales Cotton Co.", country: "AU", city: "Narrabri", source: [149.783, -30.331], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 28, supplier: "Riverina Fibre Harvest Pty Ltd", country: "AU", city: "Griffith", source: [146.0583, -34.2889], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 29, supplier: "Prairie Delta Cotton Farms LLC", country: "US", city: "Memphis", source: [-90.049, 35.1495], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 30, supplier: "Lone Star Harvest Group", country: "US", city: "Houston", source: [-95.3698, 29.7604], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 31, supplier: "Zambezi Cotton Growers Ltd.", country: "ZM", city: "Lusaka", source: [28.3228, -15.3875], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 32, supplier: "Sahel Fibre Cooperative", country: "ML", city: "Bamako", source: [-8.0172829, 12.638545], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 33, supplier: "Great Lakes Cotton Company", country: "TZ", city: "Dar es Salaam", source: [39.2083, -6.7924], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 34, supplier: "Kalahari Cotton Estates", country: "BW", city: "Gaborone", source: [25.9231, -24.6282], destination: [29.0963, 37.783], parent_supplier: "Anatolia Spinners A.S.", parent_location: "TR", parent_city: "Denizli", stage: "Trims", level: 6, phase: "Primary Harvest / Sourcing", sub_phase: "Cotton farming", phase_description: "Cultivation and harvesting of cotton plants to obtain raw fibers used in thread production.", material: "Cotton thread", is_demo: true },
+            { id: 35, supplier: "Anatolia Spinners A.S.", country: "TR", city: "Denizli", source: [29.0963, 37.783], destination: [28.9784, 41.0082], parent_supplier: "EgeColor Tekstil Boya Ltd.", parent_location: "TR", parent_city: "Istanbul", stage: "Trims", level: 6, phase: "Spinning", sub_phase: "Spinning", phase_description: "Twisting/spinning cleaned cotton fibers into continuous yarns suitable for thread making.", material: "Cotton thread", is_demo: true },
+            { id: 36, supplier: "EgeColor Tekstil Boya Ltd.", country: "TR", city: "Istanbul", source: [28.9784, 41.0082], destination: [-8.6151, 41.5388], parent_supplier: "Tintas do Atlantico Lda.", parent_location: "PT", parent_city: "Barcelos", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Dyeing", phase_description: "Coloring cotton threads to match garment specifications using reactive or natural dyes.", material: "Cotton thread", is_demo: true },
+            { id: 37, supplier: "Tintas do Atlantico Lda.", country: "PT", city: "Barcelos", source: [-8.6151, 41.5388], destination: [-8.4037969, 41.388926], parent_supplier: "Crafil", parent_location: "PT", parent_city: "Oliveira Sao Mateus", stage: "Trims", level: 6, phase: "Finishing", sub_phase: "Dyeing", phase_description: "Coloring cotton threads to match garment specifications using reactive or natural dyes.", material: "Cotton thread", is_demo: true },
+            { id: 38, supplier: "Crafil", country: "PT", city: "Oliveira Sao Mateus", source: [-8.4037969, 41.388926], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Thread winding", phase_description: "Winding dyed or raw thread onto spools, cones, or bobbins, preparing it for sewing and garment assembly.", material: "Cotton thread", is_demo: false },
             
-            // Leather patch production
-            { id: 27, supplier: "ItalPelle Sourcing S.r.l.", country: "IT", city: "Santa Croce sull'Arno", source: [10.77, 43.71], destination: [11.33, 45.52], parent_supplier: "Conceria Valverde S.p.A", parent_location: "IT", parent_city: "Arzignano", stage: "Trims", level: 6, phase: "Slaughterhouse", sub_phase: "Hide supplier", phase_description: "Sourcing animal hides as a by-product of the meat industry.", material: "Leather patch" },
-            { id: 28, supplier: "Conceria Valverde S.p.A", country: "IT", city: "Arzignano", source: [11.33, 45.52], destination: [10.847695, 44.7797229], parent_supplier: "Cadica", parent_location: "IT", parent_city: "Modena", stage: "Trims", level: 6, phase: "Leather tanning", sub_phase: "Leather tanning", phase_description: "Stabilizing hides through chemical or vegetable tanning to create durable leather.", material: "Leather patch" },
-            { id: 29, supplier: "Cadica", country: "IT", city: "Modena", source: [10.847695, 44.7797229], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Leather patch production", phase_description: "Polishing, dyeing, coating, or embossing hides for final look and performance.", material: "Leather patch" },
+            // Trims - Leather
+            { id: 39, supplier: "ItalPelle Sourcing S.r.l.", country: "IT", city: "Santa Croce sull'Arno", source: [10.77, 43.71], destination: [11.33, 45.52], parent_supplier: "Conceria Valverde S.p.A", parent_location: "IT", parent_city: "Arzignano", stage: "Trims", level: 6, phase: "Slaughterhouse", sub_phase: "Hide supplier", phase_description: "Sourcing animal hides as a by-product of the meat industry.", material: "Leather patch", is_demo: true },
+            { id: 40, supplier: "Conceria Valverde S.p.A", country: "IT", city: "Arzignano", source: [11.33, 45.52], destination: [10.847695, 44.7797229], parent_supplier: "Cadica", parent_location: "IT", parent_city: "Modena", stage: "Trims", level: 6, phase: "Leather tanning", sub_phase: "Leather tanning", phase_description: "Stabilizing hides through chemical or vegetable tanning to create durable leather.", material: "Leather patch", is_demo: true },
+            { id: 41, supplier: "Cadica", country: "IT", city: "Modena", source: [10.847695, 44.7797229], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Assembly", sub_phase: "Leather patch production", phase_description: "Polishing, dyeing, coating, or embossing hides for final look and performance.", material: "Leather patch", is_demo: false },
             
-            // Labels
-            { id: 30, supplier: "Passamar", country: "PT", city: "Vilarinho das Cambas", source: [-8.5747734, 41.3833695], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Label production", sub_phase: "Label production", phase_description: "Manufacturing woven, printed, or embroidered labels that provide brand identity and care instructions for garments.", material: "Labels" },
+            // Trims - Labels
+            { id: 42, supplier: "Passamar", country: "PT", city: "Vilarinho das Cambas", source: [-8.5747734, 41.3833695], destination: [-8.2962, 41.4444], parent_supplier: "Lisama", parent_location: "PT", parent_city: "Guimaraes", stage: "Trims", level: 6, phase: "Label production", sub_phase: "Label production", phase_description: "Manufacturing woven, printed, or embroidered labels that provide brand identity and care instructions for garments.", material: "Labels", is_demo: false },
             
-            // Final assembly and warehouse
-            { id: 31, supplier: "Lisama", country: "PT", city: "Guimaraes", source: [-8.2962, 41.4444], destination: [10.8200294, 59.9290137], parent_supplier: "Livid", parent_location: "NO", parent_city: "Oslo", stage: "Assembly", level: 4, phase: "Assembly", sub_phase: "Cut & Sew", phase_description: "Cutting and stitching panels and components together into garments.", material: "Product" },
-            { id: 32, supplier: "Livid", country: "NO", city: "Oslo", source: [10.8200294, 59.9290137], destination: null, parent_supplier: null, parent_location: null, parent_city: null, stage: "Warehouse", level: 5, phase: "Warehouse", sub_phase: "Product storing", phase_description: "Product is stored at our central warehouse in Oslo", material: null }
+            // Assembly
+            { id: 43, supplier: "Lisama", country: "PT", city: "Guimaraes", source: [-8.2962, 41.4444], destination: [-8.5206366, 41.4123881], parent_supplier: "Portipomenor", parent_location: "PT", parent_city: "Irmãos Vila Nova", stage: "Assembly", level: 4, phase: "Assembly", sub_phase: "Cut & Sew", phase_description: "Cutting and stitching panels and components together into garments.", material: "Product", is_demo: false },
+            { id: 44, supplier: "IVN", country: "PT", city: "Alvarenga", source: [-8.1513, 40.9692], destination: [-8.1513, 40.9692], parent_supplier: "IVN", parent_location: "PT", parent_city: "Alvarenga", stage: "Assembly", level: 4, phase: "Assembly", sub_phase: "Laundry", phase_description: "Industrial washing of garments after assembly to achieve the desired hand-feel, fit, and appearance", material: "Product", is_demo: false },
+            { id: 45, supplier: "Portipomenor", country: "PT", city: "Irmãos Vila Nova", source: [-8.5206366, 41.4123881], destination: [10.8200294, 59.9290137], parent_supplier: "Livid", parent_location: "NO", parent_city: "Oslo", stage: "Assembly", level: 4, phase: "Assembly", sub_phase: "Package & finishing", phase_description: "Final stage of garment preparation where items are pressed, tagged, folded, and packaged for distribution", material: "Product", is_demo: false },
+            
+            // Warehouse
+            { id: 46, supplier: "Livid", country: "NO", city: "Oslo", source: [10.8200294, 59.9290137], destination: null, parent_supplier: null, parent_location: null, parent_city: null, stage: "Warehouse", level: 5, phase: "Warehouse", sub_phase: "Product storing", phase_description: "Product is stored at our central warehouse in Oslo", material: null, is_demo: false }
         ];
 
         const map = new mapboxgl.Map({
@@ -370,7 +389,6 @@
 
         async function createRoutesAndPoints() {
             const routeFeatures = [];
-            const arrowFeatures = [];
             const waypointFeatures = [];
 
             for (const item of supplyChainData) {
@@ -417,25 +435,6 @@
                             });
                         }
                     }
-
-                    // Create arrows only for international routes
-                    if (routeCoordinates.length >= 2 && isInternational) {
-                        const arrows = createArrowsAlongRoute(routeCoordinates, 3); // Only for international routes
-                        arrows.forEach(arrow => {
-                            arrowFeatures.push({
-                                type: 'Feature',
-                                properties: {
-                                    bearing: arrow.bearing,
-                                    routeId: item.id,
-                                    isInternational: isInternational
-                                },
-                                geometry: {
-                                    type: 'Point',
-                                    coordinates: arrow.coordinates
-                                }
-                            });
-                        });
-                    }
                 }
             }
 
@@ -464,9 +463,9 @@
                         'interpolate',
                         ['linear'],
                         ['zoom'],
-                        1, 2,
-                        6, 3,
-                        12, 4
+                        1, 1,
+                        6, 1.5,
+                        12, 2
                     ],
                     'line-opacity': 0.5
                 }
@@ -488,11 +487,10 @@
                         'interpolate',
                         ['linear'],
                         ['zoom'],
-                        1, 2,
-                        6, 3,
-                        12, 4
+                        1, 1,
+                        6, 1.5,
+                        12, 2
                     ],
-                    // 'line-opacity': 0.7,
                     'line-dasharray': [3, 2]
                 }
             });
@@ -527,51 +525,6 @@
                         'circle-stroke-color': '#ffffff'
                     }
                 });
-            }
-
-            // Add arrows
-            if (arrowFeatures.length > 0) {
-                const arrowSVG = `
-                    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3 10 L10 3 L10 7 L17 7 L17 13 L10 13 L10 17 Z" fill="#000000" stroke="#ffffff" stroke-width="1"/>
-                    </svg>
-                `;
-                const arrowDataURL = 'data:image/svg+xml;base64,' + btoa(arrowSVG);
-
-                const arrowImg = new Image();
-                arrowImg.onload = () => {
-                    map.addImage('direction-arrow', arrowImg);
-
-                    map.addSource('route-arrows', {
-                        type: 'geojson',
-                        data: {
-                            type: 'FeatureCollection',
-                            features: arrowFeatures
-                        }
-                    });
-
-                    map.addLayer({
-                        id: 'route-arrows',
-                        type: 'symbol',
-                        source: 'route-arrows',
-                        layout: {
-                            'icon-image': 'direction-arrow',
-                            'icon-size': [
-                                'interpolate',
-                                ['linear'],
-                                ['zoom'],
-                                1, 0.8,
-                                6, 1.1,
-                                12, 1.6
-                            ],
-                            'icon-rotate': ['get', 'bearing'],
-                            'icon-rotation-alignment': 'map',
-                            'icon-allow-overlap': true,
-                            'icon-ignore-placement': true
-                        }
-                    });
-                };
-                arrowImg.src = arrowDataURL;
             }
 
             // Add custom pin icons
@@ -644,126 +597,70 @@
             });
         }
 
-        function createArrowsAlongRoute(coordinates, maxArrows = 3) {
-            const arrows = [];
-            if (coordinates.length < 2) return arrows;
-
-            // Calculate total route length
-            let totalLength = 0;
-            const segmentLengths = [];
-            for (let i = 0; i < coordinates.length - 1; i++) {
-                const start = coordinates[i];
-                const end = coordinates[i + 1];
-                const segmentLength = Math.sqrt(
-                    Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2)
-                );
-                segmentLengths.push(segmentLength);
-                totalLength += segmentLength;
-            }
-
-            // Use exactly maxArrows (3-4) arrows per route, regardless of length
-            const numArrows = Math.min(maxArrows, Math.max(1, coordinates.length - 1));
-
-            for (let arrowIndex = 1; arrowIndex <= numArrows; arrowIndex++) {
-                const targetDistance = (arrowIndex / (numArrows + 1)) * totalLength;
-
-                let accumulatedDistance = 0;
-                let segmentIndex = 0;
-                let segmentProgress = 0;
-
-                // Find the segment where this arrow should be placed
-                for (let i = 0; i < segmentLengths.length; i++) {
-                    if (accumulatedDistance + segmentLengths[i] >= targetDistance) {
-                        segmentIndex = i;
-                        segmentProgress = (targetDistance - accumulatedDistance) / segmentLengths[i];
-                        break;
-                    }
-                    accumulatedDistance += segmentLengths[i];
-                }
-
-                const segmentStart = coordinates[segmentIndex];
-                const segmentEnd = coordinates[segmentIndex + 1] || segmentStart;
-
-                // Calculate arrow position
-                const arrowLng = segmentStart[0] + (segmentEnd[0] - segmentStart[0]) * segmentProgress;
-                const arrowLat = segmentStart[1] + (segmentEnd[1] - segmentStart[1]) * segmentProgress;
-
-                // Calculate bearing
-                const segmentDeltaX = segmentEnd[0] - segmentStart[0];
-                const segmentDeltaY = segmentEnd[1] - segmentStart[1];
-                const segmentBearing = Math.atan2(segmentDeltaX, segmentDeltaY) * (180 / Math.PI) + 90;
-
-                arrows.push({
-                    coordinates: [arrowLng, arrowLat],
-                    bearing: segmentBearing
-                });
-            }
-
-            return arrows;
+        // Helper function to find suppliers by coordinates
+        function findSuppliersByCoordinates(coordinates, tolerance = 0.001) {
+            return supplyChainData.filter(item => {
+                const [lng, lat] = item.source;
+                const [targetLng, targetLat] = coordinates;
+                return Math.abs(lng - targetLng) < tolerance && Math.abs(lat - targetLat) < tolerance;
+            });
         }
 
         function addSupplierPoints() {
-            // Source points
-            map.addSource('source-points', {
-                type: 'geojson',
-                data: {
-                    type: 'FeatureCollection',
-                    features: supplyChainData.map(item => ({
-                        type: 'Feature',
-                        properties: {
-                            supplier: item.supplier,
-                            stage: item.stage,
-                            level: item.level,
-                            country: item.country,
-                            city: item.city,
-                            phase: item.phase,
-                            sub_phase: item.sub_phase || 'N/A',
-                            phase_description: item.phase_description,
-                            material: item.material,
-                            type: 'source'
-                        },
-                        geometry: {
-                            type: 'Point',
-                            coordinates: item.source
-                        }
-                    }))
+            // Group suppliers ONLY by their source coordinates
+            const sourceGroups = new Map();
+            
+            supplyChainData.forEach(item => {
+                const coordKey = `${item.source[0]},${item.source[1]}`;
+                if (!sourceGroups.has(coordKey)) {
+                    sourceGroups.set(coordKey, []);
                 }
+                sourceGroups.get(coordKey).push(item);
             });
 
-            // Destination points
-            const destinationFeatures = supplyChainData
-                .filter(item => item.destination && item.parent_supplier)
-                .map(item => ({
+            // Create features only for source points (grouped by source location)
+            const allPointFeatures = [];
+            sourceGroups.forEach((suppliers, coordKey) => {
+                const [lng, lat] = coordKey.split(',').map(Number);
+                allPointFeatures.push({
                     type: 'Feature',
                     properties: {
-                        supplier: item.parent_supplier,
-                        country: item.parent_location,
-                        city: item.parent_city,
-                        phase: item.phase,
-                        sub_phase: item.sub_phase || 'N/A',
-                        stage: item.stage,
-                        level: item.level,
-                        type: 'destination'
+                        coordinates: [lng, lat],
+                        supplierCount: suppliers.length,
+                        suppliers: suppliers.map(s => ({
+                            id: s.id,
+                            supplier: s.supplier,
+                            stage: s.stage,
+                            level: s.level,
+                            country: s.country,
+                            city: s.city,
+                            phase: s.phase,
+                            sub_phase: s.sub_phase || 'N/A',
+                            phase_description: s.phase_description,
+                            material: s.material
+                        })),
+                        type: 'source'
                     },
                     geometry: {
                         type: 'Point',
-                        coordinates: item.destination
+                        coordinates: [lng, lat]
                     }
-                }));
+                });
+            });
 
-            map.addSource('destination-points', {
+            map.addSource('all-points', {
                 type: 'geojson',
                 data: {
                     type: 'FeatureCollection',
-                    features: destinationFeatures
+                    features: allPointFeatures
                 }
             });
 
-            // Add symbol layers for points using custom icons
+            // Add single layer for all points
             map.addLayer({
-                id: 'source-points',
+                id: 'all-points',
                 type: 'symbol',
-                source: 'source-points',
+                source: 'all-points',
                 layout: {
                     'icon-image': 'source-pin',
                     'icon-size': [
@@ -773,25 +670,6 @@
                         1, 0.8,
                         6, 1.0,
                         12, 1.4
-                    ],
-                    'icon-allow-overlap': true,
-                    'icon-ignore-placement': true
-                }
-            });
-
-            map.addLayer({
-                id: 'destination-points',
-                type: 'symbol',
-                source: 'destination-points',
-                layout: {
-                    'icon-image': 'destination-pin',
-                    'icon-size': [
-                        'interpolate',
-                        ['linear'],
-                        ['zoom'],
-                        1, 0.6,
-                        6, 0.8,
-                        12, 1.2
                     ],
                     'icon-allow-overlap': true,
                     'icon-ignore-placement': true
@@ -811,7 +689,9 @@
                 currentPopup = new mapboxgl.Popup({
                     offset: 25,
                     closeButton: true,
-                    closeOnClick: false
+                    closeOnClick: false,
+                    maxWidth: '320px',
+                    className: 'custom-popup'
                 })
                     .setLngLat(lngLat)
                     .setHTML(content)
@@ -822,77 +702,62 @@
                 });
             }
 
-            // Click handlers for different point types
-            map.on('click', 'source-points', (e) => {
+            function createSupplierPopupContent(suppliers) {
+                if (suppliers.length === 1) {
+                    const supplier = suppliers[0];
+                    return `
+                        <div>
+                            <div class="stage-title">${supplier.phase}</div>
+                            <div class="supplier-name">${supplier.supplier}</div>
+                            <div class="stage-badge">${supplier.stage}</div>
+                            
+                            <div class="detail-section">
+                                <div class="detail-label">Location</div>
+                                <div class="detail-value">${supplier.city}, ${supplier.country}</div>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <div class="detail-label">Process</div>
+                                <div class="detail-value">${supplier.sub_phase}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Multiple suppliers at same location
+                    let content = `<div class="multi-supplier-popup">`;
+                    content += `<div class="stage-title">Multiple Suppliers (${suppliers.length})</div>`;
+                    content += `<div style="margin-bottom: 8px; font-size: 12px; color: #666;">Location: ${suppliers[0].city}, ${suppliers[0].country}</div>`;
+                    
+                    suppliers.forEach((supplier, index) => {
+                        content += `
+                            <div class="supplier-item">
+                                <div style="font-weight: 600; margin-bottom: 4px;">${supplier.supplier}</div>
+                                <div style="font-size: 12px; color: #666;">
+                                    ${supplier.stage} • ${supplier.phase} • ${supplier.sub_phase}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    content += `</div>`;
+                    return content;
+                }
+            }
+
+            // Click handler for all points
+            map.on('click', 'all-points', (e) => {
                 const props = e.features[0].properties;
-                const popupContent = `
-                    <div>
-                        <div class="stage-title">${props.phase}</div>
-                        <div class="supplier-name">${props.supplier}</div>
-                         <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
-                        
-                        <div class="detail-section">
-                            <div class="detail-label">Location</div>
-                            <div class="detail-value">${props.city}, ${props.country}</div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <div class="detail-label">Process</div>
-                            <div class="detail-value">${props.sub_phase}</div>
-                        </div>
-                    </div>
-                `;
-
-                showPopup(e.lngLat, popupContent);
-            });
-
-            map.on('click', 'destination-points', (e) => {
-                const props = e.features[0].properties;
-                const popupContent = `
-                     <div>
-                        <div class="stage-title">${props.phase}</div>
-                        <div class="supplier-name">${props.supplier}</div>
-                         <div class="stage-badge">Level ${props.level}: ${props.stage}</div>
-                        
-                        <div class="detail-section">
-                            <div class="detail-label">Location</div>
-                            <div class="detail-value">${props.city}, ${props.country}</div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <div class="detail-label">Process</div>
-                            <div class="detail-value">${props.sub_phase}</div>
-                        </div>
-                    </div>
-                `;
-
-                showPopup(e.lngLat, popupContent);
-            });
-
-            map.on('click', 'waypoints', (e) => {
-                const popupContent = `
-                    <div>
-                        <div class="stage-badge">Maritime Waypoint</div>
-                        <div class="stage-title">Strategic Shipping Route</div>
-                        
-                        <div class="detail-section">
-                            <div class="detail-label">Type</div>
-                            <div class="detail-value">Essential maritime chokepoint or hub</div>
-                        </div>
-                    </div>
-                `;
-
+                const suppliers = JSON.parse(props.suppliers);
+                const popupContent = createSupplierPopupContent(suppliers);
                 showPopup(e.lngLat, popupContent);
             });
 
             // Cursor changes
-            ['source-points', 'destination-points', 'waypoints'].forEach(layer => {
-                map.on('mouseenter', layer, () => {
-                    map.getCanvas().style.cursor = 'pointer';
-                });
-                map.on('mouseleave', layer, () => {
-                    map.getCanvas().style.cursor = '';
-                });
+            map.on('mouseenter', 'all-points', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'all-points', () => {
+                map.getCanvas().style.cursor = '';
             });
         }
 
